@@ -13,10 +13,10 @@ YouSpace is a warm, cozy web application where users can continuously upload pho
 
 ## Key Features
 1. **Shared Spaces**: Multiple users can contribute to the same space via Space ID
-2. **Photo Uploads**: Upload photos using Replit Object Storage with presigned URLs
+2. **Photo Uploads**: Upload photos using Supabase Storage
 3. **Memory Notes**: Add short notes to accompany each photo
 4. **Masonry Gallery**: Beautiful responsive masonry grid layout for photos
-5. **AI Story Generation**: Generate warm, cohesive narratives from memories using OpenAI (gpt-4o-mini)
+5. **AI Travel Journal Generation**: Generate realistic, documentary-style travel journals in Markdown format using OpenAI (gpt-4o-mini)
 6. **No Authentication**: Public file uploading for simplicity (MVP)
 
 ## Tech Stack
@@ -32,8 +32,8 @@ YouSpace is a warm, cozy web application where users can continuously upload pho
 
 ### Backend
 - **Server**: Express.js
-- **Storage**: In-memory storage (MemStorage) for MVP
-- **Object Storage**: Replit Object Storage integration
+- **Database**: Supabase PostgreSQL with @supabase/supabase-js client
+- **Object Storage**: Supabase Storage for photo uploads
 - **AI**: Replit AI Integrations (OpenAI gpt-4o-mini)
 - **Validation**: Zod with drizzle-zod
 
@@ -45,13 +45,13 @@ YouSpace is a warm, cozy web application where users can continuously upload pho
 ## Architecture
 
 ### Data Models (shared/schema.ts)
-- **Memory**: id, spaceId, displayName, photoUrl, note, uploadedAt
-- **Space**: id, name (derived from first memory)
-- **GeneratedStory**: id, spaceId, storyTitle, storyContent, generatedAt
+- **Memory**: id, space_id, user_name, photo_url, note, created_at
+- **GeneratedStory**: id, space_id, story_text (Markdown format), created_at
 
 ### Storage Interface (server/storage.ts)
-- In-memory storage implementing IStorage interface
-- Methods for memories, spaces, and generated stories
+- SupabaseStorage class implementing IStorage interface
+- Uses @supabase/supabase-js client for database operations
+- Methods for memories and generated stories
 - Type-safe operations using types from shared/schema.ts
 
 ### API Routes (server/routes.ts)
@@ -63,9 +63,8 @@ YouSpace is a warm, cozy web application where users can continuously upload pho
 - `GET /api/story/:spaceId` - Get generated story for a space
 
 ### Services
-- **ObjectStorageService** (server/objectStorage.ts): Handle photo uploads with presigned URLs
-- **ObjectAcl** (server/objectAcl.ts): Serve uploaded photos with proper access control
-- **OpenAI Service** (server/openai.ts): Generate memory books using gpt-4o-mini
+- **Supabase Service** (server/supabase.ts): Initialize Supabase client and handle photo uploads
+- **OpenAI Service** (server/openai.ts): Generate documentary-style travel journals using gpt-4o-mini
 
 ### Frontend Components (client/src/)
 - **home.tsx**: Main page with all sections
@@ -73,53 +72,62 @@ YouSpace is a warm, cozy web application where users can continuously upload pho
 - **App.tsx**: Application shell with routing
 - **index.css**: Design tokens and custom utility classes (hover-elevate, etc.)
 
-## Environment Variables (Automatically Set by Replit)
-- `PRIVATE_OBJECT_DIR` - Private object storage directory
-- `PUBLIC_OBJECT_SEARCH_PATHS` - Public object search paths
-- `AI_INTEGRATIONS_OPENAI_BASE_URL` - OpenAI API base URL
-- `AI_INTEGRATIONS_OPENAI_API_KEY` - OpenAI API key
-- `SESSION_SECRET` - Session secret for Express
+## Environment Variables
+- `SUPABASE_URL` - Supabase project URL
+- `SUPABASE_ANON_KEY` - Supabase anonymous public key
+- `AI_INTEGRATIONS_OPENAI_BASE_URL` - OpenAI API base URL (from Replit AI Integrations)
+- `AI_INTEGRATIONS_OPENAI_API_KEY` - OpenAI API key (from Replit AI Integrations)
 
 ## Recent Changes (November 3, 2025)
 
-### Completed Implementation
-1. **Schema & Frontend**:
-   - Defined all data models in shared/schema.ts
-   - Configured design tokens in tailwind.config.ts with handwritten font family
-   - Added Crimson Text and Caveat fonts from Google Fonts
-   - Built all React components with warm, cozy aesthetic
-   - Created beautiful masonry gallery with hover effects
-   - Implemented elegant story display with paper-like texture
+### Migration to Supabase
+1. **Database Migration**:
+   - Migrated from Replit PostgreSQL to Supabase
+   - Created SupabaseStorage class using @supabase/supabase-js client
+   - Updated schema to match Supabase structure (user_name, story_text columns)
+   - Removed authentication system (no more users/sessions tables)
 
-2. **Backend**:
-   - Implemented complete storage interface with type-safe operations
-   - Created all API endpoints for memories, photos, and story generation
-   - Set up ObjectStorageService for presigned URL uploads
-   - Integrated OpenAI gpt-4o-mini for story generation
-   - Added proper error handling and validation
+2. **Storage Migration**:
+   - Replaced Replit Object Storage with Supabase Storage
+   - Updated photo upload flow to use Supabase Storage SDK
+   - Configured public bucket for photo access
 
-3. **Integration & Polish**:
-   - Connected frontend to backend via TanStack Query
-   - Fixed DashboardModal import (changed from `@uppy/react` to `@uppy/react/dashboard-modal`)
-   - Added loading states with beautiful animations
-   - Implemented error handling with elegant messages
-   - Verified all environment variables are properly set
+3. **AI Enhancement**:
+   - Changed from poetic stories to documentary-style travel journals
+   - Updated prompt for realistic, calm, reflective diary tone
+   - Output now in Markdown format with emoji section markers
+   - Chronological organization with short, authentic sentences (3-4 per section)
+   - Avoids exaggeration - keeps content real and human
+
+4. **Frontend Updates**:
+   - Removed Sign In/Sign Out UI
+   - Restored simple display name input (no authentication)
+   - Updated story display to render Markdown format
 
 ### Technical Notes
-- **Uppy Import Fix**: DashboardModal must be imported from `@uppy/react/dashboard-modal` (not from main export)
-- **Object Storage**: Uses Replit's built-in object storage with presigned URLs for secure uploads
-- **AI Integration**: Uses Replit AI Integrations (charges to Replit credits, no separate API key needed)
-- **Storage Pattern**: In-memory storage for MVP simplicity
+- **Database**: Uses Supabase PostgreSQL with environment variables (SUPABASE_URL, SUPABASE_ANON_KEY)
+- **Storage**: Supabase Storage with public 'memories' bucket
+- **AI Output**: Documentary-style travel journal in Markdown format
+- **Authentication**: None - public access with display names only
 
 ## User Journey
 1. User enters or creates a Space ID
 2. User adds their display name
-3. User uploads photos using beautiful Uppy modal
+3. User uploads photos using Uppy modal
 4. User adds notes to memories
 5. Photos appear in masonry gallery
 6. When ready, user clicks "Generate Our Memory Book"
-7. AI generates warm, cohesive story from all memories
-8. Story displays with elegant typography on paper-like background
+7. AI generates realistic, documentary-style travel journal in Markdown format
+8. Journal displays with Markdown formatting and elegant typography on paper-like background
+
+## AI Output Format
+The AI generates documentary-style travel journals with:
+- **Tone**: Calm, reflective, real-life diary style (not poetic or fictional)
+- **Structure**: Chronological sections with emoji markers (e.g., 🏞 Start, 🌲 Path, ❄️ Snow, 🏕 Return)
+- **Content**: Short, authentic sentences (3-4 per section) matching uploaded notes/photos
+- **Format**: Markdown with # title and ## section headings
+- **Length**: 300-600 words
+- **Style**: Realistic and human - avoids exaggeration or imagination
 
 ## File Structure
 ```

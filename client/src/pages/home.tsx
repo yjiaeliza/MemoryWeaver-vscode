@@ -332,9 +332,44 @@ export default function Home() {
                 </CardHeader>
                 <CardContent className="prose prose-lg max-w-none font-serif">
                   <div
-                    className="whitespace-pre-wrap leading-relaxed"
+                    className="leading-relaxed"
                     data-testid="text-generated-story"
-                    dangerouslySetInnerHTML={{ __html: generatedStory.story_text.replace(/^# (.+)$/gm, '<h1 class="font-handwritten text-3xl mb-4">$1</h1>').replace(/\n\n/g, '</p><p class="mb-4">').replace(/^/, '<p class="mb-4">').replace(/$/, '</p>') }}
+                    dangerouslySetInnerHTML={{ 
+                      __html: (() => {
+                        const lines = generatedStory.story_text.split('\n');
+                        const output: string[] = [];
+                        let currentParagraph: string[] = [];
+                        
+                        const flushParagraph = () => {
+                          if (currentParagraph.length > 0) {
+                            output.push(`<p class="mb-4">${currentParagraph.join(' ')}</p>`);
+                            currentParagraph = [];
+                          }
+                        };
+                        
+                        for (const line of lines) {
+                          const trimmed = line.trim();
+                          
+                          if (!trimmed) {
+                            flushParagraph();
+                            continue;
+                          }
+                          
+                          if (trimmed.startsWith('## ')) {
+                            flushParagraph();
+                            output.push(`<h2 class="font-handwritten text-2xl mt-6 mb-3">${trimmed.slice(3)}</h2>`);
+                          } else if (trimmed.startsWith('# ')) {
+                            flushParagraph();
+                            output.push(`<h1 class="font-handwritten text-3xl mb-4">${trimmed.slice(2)}</h1>`);
+                          } else {
+                            currentParagraph.push(trimmed);
+                          }
+                        }
+                        
+                        flushParagraph();
+                        return output.join('');
+                      })()
+                    }}
                   />
                 </CardContent>
               </Card>

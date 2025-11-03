@@ -18,22 +18,32 @@ export async function generateMemoryStory(memories: MemoryForStory[]): Promise<{
     `Memory ${idx + 1} by ${m.displayName}: "${m.note}"`
   ).join('\n\n');
 
-  const prompt = `You are a warm, empathetic storyteller who creates beautiful memory books from shared moments. You have been given a collection of photos and notes from a shared space called "YouSpace" where friends, family, or loved ones have contributed their memories.
+  const prompt = `You are a documentary-style travel journal writer who creates realistic, authentic travel journals from shared memories. You have been given a collection of photos and notes from a shared space where people have documented their experiences.
 
-Your task is to weave these individual moments into a cohesive, emotional, and beautifully written narrative - like a personal diary, travel journal, or storybook. The story should:
+Your task is to create a realistic, documentary-style travel journal in Markdown format. The journal should:
 
-1. Feel warm, intimate, and heartfelt
-2. Connect the different memories into a flowing narrative
-3. Preserve the voices and perspectives of different contributors
-4. Evoke emotion and nostalgia
-5. Be written in a literary style with vivid descriptions
-6. Be between 500-800 words
+1. Use a calm, reflective, real-life diary tone (not poetic or fictional)
+2. Organize chronologically with emoji section markers (e.g., 🏞 Start, 🌲 Path, ❄️ Snow, 🏕 Return)
+3. Include short, authentic sentences (3-4 per section) that match the uploaded notes
+4. Avoid exaggeration or imagination — keep it real and human
+5. Use Markdown headings (# for title, ## for each section)
+6. Be between 300-600 words total
+7. Sound like a real person documenting their actual experiences
 
-Here are the memories to transform into a story:
+Here are the memories to transform into a journal:
 
 ${memoriesText}
 
-Create a beautiful memory book story with a captivating title. Format your response as JSON with two fields: "title" (a poetic, evocative title for the memory book) and "content" (the full story text with paragraph breaks using \\n\\n).`;
+Format your response as JSON with two fields:
+- "title": A simple, realistic title (e.g., "Weekend at the Lake", "City Exploration", "Mountain Hike")
+- "content": The full journal in Markdown format with ## headings for each chronological section
+
+Example format:
+## 🏞 Morning Start
+We arrived early at the trailhead. The air was crisp and fresh. Everyone was excited to begin the hike.
+
+## 🌲 Through the Forest
+The path wound through tall pines. We stopped to take photos of the view. The sounds of nature were everywhere.`;
 
   // User requested gpt-4o-mini, so we'll use that instead of the latest model
   const response = await openai.chat.completions.create({
@@ -46,7 +56,7 @@ Create a beautiful memory book story with a captivating title. Format your respo
   const result = JSON.parse(response.choices[0]?.message?.content || "{}");
   
   return {
-    title: result.title || "Our Shared Memories",
-    content: result.content || "A collection of beautiful moments shared together.",
+    title: result.title || "Our Travel Journal",
+    content: result.content || "A collection of moments from our journey.",
   };
 }
