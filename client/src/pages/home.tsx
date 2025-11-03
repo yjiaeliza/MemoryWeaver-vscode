@@ -2,8 +2,6 @@ import { useState } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import type { Memory, GeneratedStory } from "@shared/schema";
-import { ObjectUploader } from "@/components/ObjectUploader";
-import type { UploadResult } from "@uppy/core";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -11,16 +9,15 @@ import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/hooks/use-toast";
-import { useAuth } from "@/hooks/useAuth";
-import { BookOpen, Upload, Sparkles, Image as ImageIcon, LogOut } from "lucide-react";
+import { BookOpen, Upload, Sparkles, Image as ImageIcon } from "lucide-react";
 
 export default function Home() {
   const [spaceId, setSpaceId] = useState("");
-  const [displayName, setDisplayName] = useState("");
+  const [userName, setUserName] = useState("");
   const [note, setNote] = useState("");
-  const [uploadedPhotos, setUploadedPhotos] = useState<string[]>([]);
+  const [uploadedPhoto, setUploadedPhoto] = useState<string | null>(null);
+  const [isUploading, setIsUploading] = useState(false);
   const { toast } = useToast();
-  const { user } = useAuth();
 
   const { data: memories = [], isLoading: memoriesLoading } = useQuery<Memory[]>({
     queryKey: ["/api/memories", spaceId],
@@ -32,26 +29,72 @@ export default function Home() {
     enabled: !!spaceId,
   });
 
+  const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    setIsUploading(true);
+    try {
+      // Get upload URL from Supabase
+      const uploadResponse = await apiRequest<{ uploadURL: string; publicURL: string }>("POST", "/api/storage/upload", {
+        fileName: file.name,
+        fileType: file.type,
+      });
+
+      // Upload file to Supabase Storage
+      const uploadResult = await fetch(uploadResponse.uploadURL, {
+        method: "PUT",
+        body: file,
+        headers: {
+          "Content-Type": file.type,
+        },
+      });
+
+      if (!uploadResult.ok) {
+        throw new Error("Failed to upload photo");
+      }
+
+      setUploadedPhoto(uploadResponse.publicURL);
+      toast({
+        title: "Photo uploaded!",
+        description: "Your photo is ready to be added to the memory.",
+      });
+    } catch (error) {
+      console.error("Upload error:", error);
+      toast({
+        title: "Upload failed",
+        description: error instanceof Error ? error.message : "Failed to upload photo",
+        variant: "destructive",
+      });
+    } finally {
+      setIsUploading(false);
+    }
+  };
+
   const addMemoryMutation = useMutation({
     mutationFn: async () => {
-      if (uploadedPhotos.length === 0) {
-        throw new Error("Please upload at least one photo");
+      if (!uploadedPhoto) {
+        throw new Error("Please upload a photo");
       }
-      const memoryPromises = uploadedPhotos.map(photoUrl =>
-        apiRequest("POST", "/api/memories", {
-          spaceId,
-          displayName,
-          note,
-          photoUrl,
-        })
-      );
-      return Promise.all(memoryPromises);
+      if (!userName.trim()) {
+        throw new Error("Please enter your name");
+      }
+      if (!note.trim()) {
+        throw new Error("Please add a note");
+      }
+      
+      return apiRequest("POST", "/api/memories", {
+        space_id: spaceId,
+        user_name: userName,
+        note,
+        photo_url: uploadedPhoto,
+      });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/memories", spaceId] });
-      setDisplayName("");
+      setUserName("");
       setNote("");
-      setUploadedPhotos([]);
+      setUploadedPhoto(null);
       toast({
         title: "Memory added!",
         description: "Your moment has been added to the shared space.",
@@ -87,276 +130,218 @@ export default function Home() {
     },
   });
 
-  const handleGetUploadParameters = async () => {
-    const response = await fetch("/api/objects/upload", { method: "POST" });
-    const data = await response.json();
-    return {
-      method: "PUT" as const,
-      url: data.uploadURL,
-    };
-  };
-
-  const handleUploadComplete = (result: UploadResult<Record<string, unknown>, Record<string, unknown>>) => {
-    const urls = result.successful.map(file => file.uploadURL);
-    setUploadedPhotos(prev => [...prev, ...urls]);
-  };
-
   return (
     <div className="min-h-screen bg-background">
       {/* Header */}
       <header className="sticky top-0 z-50 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
         <div className="container mx-auto px-4 py-6 max-w-6xl">
-          <div className="flex justify-between items-center">
-            <div className="text-center flex-1">
-              <h1 className="text-4xl md:text-5xl font-handwritten font-bold text-foreground mb-2" data-testid="text-app-title">
-                YouSpace
-              </h1>
-              <p className="text-lg font-serif italic text-muted-foreground" data-testid="text-tagline">
-                Your Shared Memory Book
-              </p>
-            </div>
-            <Button
-              variant="ghost"
-              onClick={() => window.location.href = '/api/logout'}
-              className="ml-4"
-              data-testid="button-logout"
-            >
-              <LogOut className="w-4 h-4 mr-2" />
-              Sign Out
-            </Button>
+          <div className="text-center">
+            <h1 className="text-4xl md:text-5xl font-handwritten font-bold text-foreground mb-2" data-testid="text-app-title">
+              YouSpace
+            </h1>
+            <p className="text-lg font-serif italic text-muted-foreground" data-testid="text-tagline">
+              Your Shared Memory Book
+            </p>
           </div>
         </div>
       </header>
 
-      <main className="container mx-auto px-4 py-12 max-w-6xl space-y-24">
-        {/* Upload Section */}
-        <section className="flex justify-center" id="upload-section">
-          <Card className="w-full max-w-2xl shadow-lg">
-            <CardHeader className="space-y-1 pb-6">
-              <CardTitle className="text-2xl font-serif text-center">Add Your Memories</CardTitle>
-              <CardDescription className="text-center text-base">
-                Share your moments with friends and loved ones
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-6">
-              <div className="space-y-2">
-                <Label htmlFor="space-id" className="text-sm font-medium">Space ID</Label>
-                <Input
-                  id="space-id"
-                  placeholder="Join or create a shared space (e.g., summer-vacation-2024)"
-                  value={spaceId}
-                  onChange={(e) => setSpaceId(e.target.value)}
-                  className="text-base"
-                  data-testid="input-space-id"
-                />
-                <p className="text-xs text-muted-foreground">
-                  Share this ID with others to contribute to the same memory book
-                </p>
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="display-name" className="text-sm font-medium">Your Name</Label>
-                <Input
-                  id="display-name"
-                  placeholder="How should we call you?"
-                  value={displayName}
-                  onChange={(e) => setDisplayName(e.target.value)}
-                  className="text-base"
-                  data-testid="input-display-name"
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label className="text-sm font-medium">Photos</Label>
-                <div className="space-y-4">
-                  <ObjectUploader
-                    maxNumberOfFiles={10}
-                    maxFileSize={10485760}
-                    onGetUploadParameters={handleGetUploadParameters}
-                    onComplete={handleUploadComplete}
-                    buttonClassName="w-full"
-                  >
-                    <div className="flex items-center justify-center gap-2 py-2">
-                      <Upload className="w-5 h-5" />
-                      <span>Upload Photos</span>
-                    </div>
-                  </ObjectUploader>
-                  
-                  {uploadedPhotos.length > 0 && (
-                    <div className="grid grid-cols-3 gap-3">
-                      {uploadedPhotos.map((url, idx) => (
-                        <div key={idx} className="relative aspect-square rounded-lg overflow-hidden bg-muted">
-                          <img 
-                            src={url} 
-                            alt={`Upload ${idx + 1}`}
-                            className="w-full h-full object-cover"
-                            data-testid={`img-upload-preview-${idx}`}
-                          />
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="note" className="text-sm font-medium">What made this moment special?</Label>
-                <Textarea
-                  id="note"
-                  placeholder="Share the story behind these photos..."
-                  value={note}
-                  onChange={(e) => setNote(e.target.value)}
-                  rows={4}
-                  className="resize-none text-base"
-                  data-testid="input-note"
-                />
-              </div>
-
-              <Button
-                onClick={() => addMemoryMutation.mutate()}
-                disabled={!spaceId || !displayName || !note || uploadedPhotos.length === 0 || addMemoryMutation.isPending}
-                className="w-full"
-                size="lg"
-                data-testid="button-add-memory"
-              >
-                {addMemoryMutation.isPending ? "Adding..." : "Add Memory"}
-              </Button>
-            </CardContent>
-          </Card>
-        </section>
-
-        {/* Memory Gallery */}
-        {spaceId && (
-          <section className="space-y-8" id="gallery-section">
-            <div className="text-center space-y-2">
-              <h2 className="text-3xl md:text-4xl font-serif font-semibold" data-testid="text-gallery-title">
-                Shared Memories
-              </h2>
-              <p className="text-muted-foreground">
-                Moments from everyone in <span className="font-handwritten text-lg">{spaceId}</span>
-              </p>
+      {/* Main Content */}
+      <main className="container mx-auto px-4 py-12 max-w-6xl">
+        {/* Space ID Section */}
+        <Card className="mb-12">
+          <CardHeader>
+            <CardTitle className="font-handwritten text-3xl" data-testid="text-space-section-title">
+              Enter Your Space
+            </CardTitle>
+            <CardDescription className="font-serif">
+              Enter a Space ID to join or create a shared memory book
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="flex gap-4">
+              <Input
+                placeholder="Enter Space ID (e.g., 'family-vacation-2024')"
+                value={spaceId}
+                onChange={(e) => setSpaceId(e.target.value)}
+                className="font-serif"
+                data-testid="input-space-id"
+              />
             </div>
+          </CardContent>
+        </Card>
 
-            {memoriesLoading ? (
-              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-                {[...Array(8)].map((_, i) => (
-                  <Skeleton key={i} className="aspect-square rounded-xl" />
-                ))}
-              </div>
-            ) : memories.length === 0 ? (
-              <Card className="p-12">
-                <div className="text-center space-y-4">
-                  <ImageIcon className="w-16 h-16 mx-auto text-muted-foreground opacity-50" />
-                  <div className="space-y-2">
-                    <h3 className="text-xl font-serif font-medium">No memories yet</h3>
-                    <p className="text-muted-foreground">
-                      Be the first to add a memory to this space!
-                    </p>
-                  </div>
-                </div>
-              </Card>
-            ) : (
-              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-                {memories.map((memory) => (
-                  <Card key={memory.id} className="overflow-hidden hover-elevate group cursor-pointer" data-testid={`card-memory-${memory.id}`}>
-                    <div className="relative aspect-square">
-                      <img
-                        src={memory.photoUrl}
-                        alt={memory.note}
-                        className="w-full h-full object-cover"
-                      />
-                      <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                        <div className="absolute bottom-0 left-0 right-0 p-4 text-white space-y-1">
-                          <p className="text-sm font-medium line-clamp-2">{memory.note}</p>
-                          <p className="text-xs font-handwritten opacity-90">{memory.displayName}</p>
-                        </div>
-                      </div>
-                    </div>
-                  </Card>
-                ))}
-              </div>
-            )}
-          </section>
-        )}
-
-        {/* Generate Story Section */}
-        {spaceId && memories.length > 0 && (
-          <section className="flex justify-center" id="generate-section">
-            <Card className="w-full max-w-2xl text-center shadow-lg">
-              <CardHeader className="space-y-2 pb-6">
-                <div className="flex justify-center">
-                  <div className="p-3 rounded-full bg-primary/10">
-                    <BookOpen className="w-8 h-8 text-primary" />
-                  </div>
-                </div>
-                <CardTitle className="text-2xl font-serif">
-                  Ready to weave your memories into a story?
+        {spaceId && (
+          <>
+            {/* Add Memory Section */}
+            <Card className="mb-12">
+              <CardHeader>
+                <CardTitle className="font-handwritten text-3xl flex items-center gap-2" data-testid="text-add-memory-title">
+                  <Upload className="w-6 h-6" />
+                  Add a Memory
                 </CardTitle>
-                <CardDescription className="text-base">
-                  Our AI will transform your shared moments into a beautiful, cohesive narrative
+                <CardDescription className="font-serif">
+                  Upload a photo and share your moment
                 </CardDescription>
               </CardHeader>
-              <CardContent>
+              <CardContent className="space-y-6">
+                <div className="space-y-2">
+                  <Label htmlFor="userName" className="font-serif">
+                    Your Name
+                  </Label>
+                  <Input
+                    id="userName"
+                    placeholder="Enter your name"
+                    value={userName}
+                    onChange={(e) => setUserName(e.target.value)}
+                    className="font-serif"
+                    data-testid="input-user-name"
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="photo" className="font-serif">
+                    Upload Photo
+                  </Label>
+                  <div className="flex items-center gap-4">
+                    <input
+                      id="photo"
+                      type="file"
+                      accept="image/*"
+                      onChange={handleFileUpload}
+                      className="hidden"
+                    />
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={() => document.getElementById("photo")?.click()}
+                      disabled={isUploading}
+                      data-testid="button-upload-photo"
+                    >
+                      <ImageIcon className="w-4 h-4 mr-2" />
+                      {isUploading ? "Uploading..." : uploadedPhoto ? "Change Photo" : "Choose Photo"}
+                    </Button>
+                    {uploadedPhoto && (
+                      <img
+                        src={uploadedPhoto}
+                        alt="Uploaded preview"
+                        className="w-20 h-20 object-cover rounded border"
+                        data-testid="img-photo-preview"
+                      />
+                    )}
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="note" className="font-serif">
+                    Your Note
+                  </Label>
+                  <Textarea
+                    id="note"
+                    placeholder="Share what makes this moment special..."
+                    value={note}
+                    onChange={(e) => setNote(e.target.value)}
+                    rows={4}
+                    className="font-serif resize-none"
+                    data-testid="input-note"
+                  />
+                </div>
+
                 <Button
-                  onClick={() => generateStoryMutation.mutate()}
-                  disabled={generateStoryMutation.isPending}
-                  size="lg"
-                  className="w-full md:w-auto px-8"
-                  data-testid="button-generate-story"
+                  onClick={() => addMemoryMutation.mutate()}
+                  disabled={addMemoryMutation.isPending || !uploadedPhoto || !userName || !note}
+                  className="w-full"
+                  data-testid="button-add-memory"
                 >
-                  <Sparkles className="w-5 h-5 mr-2" />
-                  {generateStoryMutation.isPending ? "Crafting your story..." : "Generate Memory Book"}
+                  {addMemoryMutation.isPending ? "Adding..." : "Add Memory"}
                 </Button>
               </CardContent>
             </Card>
-          </section>
-        )}
 
-        {/* Generated Story Display */}
-        {generatedStory && (
-          <section className="py-12 -mx-4 px-4 bg-muted/30" id="generated-story">
-            <div className="max-w-3xl mx-auto">
-              <Card className="shadow-xl overflow-hidden">
-                <div className="bg-gradient-to-br from-primary/5 to-accent/5 p-8 md:p-12 border-b">
-                  <h2 className="text-3xl md:text-4xl font-serif font-bold text-center mb-3" data-testid="text-story-title">
-                    {generatedStory.storyTitle}
-                  </h2>
-                  <p className="text-center text-muted-foreground font-handwritten text-lg">
-                    {new Date(generatedStory.createdAt).toLocaleDateString('en-US', { 
-                      month: 'long', 
-                      day: 'numeric', 
-                      year: 'numeric' 
-                    })}
-                  </p>
-                </div>
-                <CardContent className="p-8 md:p-12">
-                  <div className="prose prose-lg max-w-none font-serif">
-                    <div 
-                      className="whitespace-pre-wrap leading-relaxed text-foreground space-y-6"
-                      data-testid="text-story-content"
-                    >
-                      {generatedStory.storyContent.split('\n\n').map((paragraph, idx) => (
-                        <p key={idx} className={idx === 0 ? "first-letter:text-5xl first-letter:font-bold first-letter:mr-1 first-letter:float-left" : ""}>
-                          {paragraph}
-                        </p>
-                      ))}
-                    </div>
+            {/* Memories Gallery */}
+            <Card className="mb-12">
+              <CardHeader>
+                <CardTitle className="font-handwritten text-3xl flex items-center gap-2" data-testid="text-gallery-title">
+                  <BookOpen className="w-6 h-6" />
+                  Our Memories
+                </CardTitle>
+                <CardDescription className="font-serif">
+                  {memories.length} {memories.length === 1 ? "memory" : "memories"} in this space
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                {memoriesLoading ? (
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    {[1, 2, 3].map((i) => (
+                      <Skeleton key={i} className="h-64" />
+                    ))}
                   </div>
+                ) : memories.length === 0 ? (
+                  <p className="text-center text-muted-foreground font-serif py-12">
+                    No memories yet. Be the first to add one!
+                  </p>
+                ) : (
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    {memories.map((memory) => (
+                      <Card key={memory.id} className="overflow-hidden hover-elevate" data-testid={`card-memory-${memory.id}`}>
+                        <div className="aspect-square overflow-hidden">
+                          <img
+                            src={memory.photo_url}
+                            alt={memory.note}
+                            className="w-full h-full object-cover"
+                            data-testid={`img-memory-photo-${memory.id}`}
+                          />
+                        </div>
+                        <CardContent className="p-4">
+                          <p className="font-serif text-sm text-muted-foreground mb-2" data-testid={`text-memory-user-${memory.id}`}>
+                            {memory.user_name}
+                          </p>
+                          <p className="font-serif" data-testid={`text-memory-note-${memory.id}`}>
+                            {memory.note}
+                          </p>
+                        </CardContent>
+                      </Card>
+                    ))}
+                  </div>
+                )}
+
+                {memories.length > 0 && (
+                  <div className="mt-8 text-center">
+                    <Button
+                      onClick={() => generateStoryMutation.mutate()}
+                      disabled={generateStoryMutation.isPending}
+                      size="lg"
+                      className="font-handwritten text-lg"
+                      data-testid="button-generate-story"
+                    >
+                      <Sparkles className="w-5 h-5 mr-2" />
+                      {generateStoryMutation.isPending ? "Generating..." : "Generate Our Memory Book"}
+                    </Button>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+
+            {/* Generated Story Section */}
+            {generatedStory && (
+              <Card id="generated-story" className="scroll-mt-24 bg-card/50 backdrop-blur border-2">
+                <CardHeader>
+                  <CardTitle className="font-handwritten text-4xl text-center" data-testid="text-story-section-title">
+                    Your Memory Book
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="prose prose-lg max-w-none font-serif">
+                  <div
+                    className="whitespace-pre-wrap leading-relaxed"
+                    data-testid="text-generated-story"
+                    dangerouslySetInnerHTML={{ __html: generatedStory.story_text.replace(/^# (.+)$/gm, '<h1 class="font-handwritten text-3xl mb-4">$1</h1>').replace(/\n\n/g, '</p><p class="mb-4">').replace(/^/, '<p class="mb-4">').replace(/$/, '</p>') }}
+                  />
                 </CardContent>
               </Card>
-            </div>
-          </section>
+            )}
+          </>
         )}
       </main>
-
-      {/* Footer */}
-      <footer className="border-t mt-24 py-8">
-        <div className="container mx-auto px-4 text-center">
-          <p className="text-sm text-muted-foreground font-serif italic">
-            Made with care for preserving your precious moments
-          </p>
-        </div>
-      </footer>
     </div>
   );
 }

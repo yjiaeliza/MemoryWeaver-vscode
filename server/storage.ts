@@ -1,13 +1,7 @@
-import { type Memory, type InsertMemory, type GeneratedStory, type InsertGeneratedStory, type User, type UpsertUser, memories, generatedStories, users } from "@shared/schema";
-import { randomUUID } from "crypto";
-import { db } from "./db";
-import { eq } from "drizzle-orm";
+import { type Memory, type InsertMemory, type GeneratedStory, type InsertGeneratedStory } from "@shared/schema";
+import { supabase } from "./supabase";
 
 export interface IStorage {
-  // User operations - Required for Replit Auth
-  getUser(id: string): Promise<User | undefined>;
-  upsertUser(user: UpsertUser): Promise<User>;
-  
   // Memory operations
   createMemory(memory: InsertMemory): Promise<Memory>;
   getMemoriesBySpaceId(spaceId: string): Promise<Memory[]>;
@@ -18,123 +12,98 @@ export interface IStorage {
   updateGeneratedStory(spaceId: string, story: InsertGeneratedStory): Promise<GeneratedStory>;
 }
 
-export class MemStorage implements IStorage {
-  private memories: Map<string, Memory>;
-  private generatedStories: Map<string, GeneratedStory>;
-
-  constructor() {
-    this.memories = new Map();
-    this.generatedStories = new Map();
-  }
-
-  async createMemory(insertMemory: InsertMemory): Promise<Memory> {
-    const id = randomUUID();
-    const memory: Memory = { 
-      ...insertMemory, 
-      id,
-      createdAt: new Date(),
-    };
-    this.memories.set(id, memory);
-    return memory;
-  }
-
-  async getMemoriesBySpaceId(spaceId: string): Promise<Memory[]> {
-    return Array.from(this.memories.values())
-      .filter(memory => memory.spaceId === spaceId)
-      .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
-  }
-
-  async createGeneratedStory(insertStory: InsertGeneratedStory): Promise<GeneratedStory> {
-    const id = randomUUID();
-    const story: GeneratedStory = {
-      ...insertStory,
-      id,
-      createdAt: new Date(),
-    };
-    this.generatedStories.set(insertStory.spaceId, story);
-    return story;
-  }
-
-  async getGeneratedStoryBySpaceId(spaceId: string): Promise<GeneratedStory | undefined> {
-    return this.generatedStories.get(spaceId);
-  }
-
-  async updateGeneratedStory(spaceId: string, insertStory: InsertGeneratedStory): Promise<GeneratedStory> {
-    const existing = this.generatedStories.get(spaceId);
-    const story: GeneratedStory = {
-      ...insertStory,
-      id: existing?.id || randomUUID(),
-      createdAt: new Date(),
-    };
-    this.generatedStories.set(spaceId, story);
-    return story;
-  }
-}
-
-export class DatabaseStorage implements IStorage {
-  // User operations - Required for Replit Auth
-  async getUser(id: string): Promise<User | undefined> {
-    const [user] = await db.select().from(users).where(eq(users.id, id));
-    return user;
-  }
-
-  async upsertUser(userData: UpsertUser): Promise<User> {
-    const [user] = await db
-      .insert(users)
-      .values(userData)
-      .onConflictDoUpdate({
-        target: users.id,
-        set: {
-          ...userData,
-          updatedAt: new Date(),
-        },
-      })
-      .returning();
-    return user;
-  }
-
+export class SupabaseStorage implements IStorage {
   // Memory operations
   async createMemory(insertMemory: InsertMemory): Promise<Memory> {
-    const [memory] = await db.insert(memories).values(insertMemory).returning();
-    return memory;
+    const { data, error } = await supabase
+      .from('memories')
+      .insert(insertMemory)
+      .select()
+      .single();
+
+    if (error) {
+      console.error('Error creating memory:', error);
+      throw new Error(`Failed to create memory: ${error.message}`);
+    }
+
+    return data;
   }
 
   async getMemoriesBySpaceId(spaceId: string): Promise<Memory[]> {
-    return await db
-      .select()
-      .from(memories)
-      .where(eq(memories.spaceId, spaceId))
-      .orderBy(memories.createdAt);
+    const { data, error } = await supabase
+      .from('memories')
+      .select('*')
+      .eq('space_id', spaceId)
+      .order('created_at', { ascending: false });
+
+    if (error) {
+      console.error('Error fetching memories:', error);
+      throw new Error(`Failed to fetch memories: ${error.message}`);
+    }
+
+    return data || [];
   }
 
+  // Story operations
   async createGeneratedStory(insertStory: InsertGeneratedStory): Promise<GeneratedStory> {
-    const [story] = await db.insert(generatedStories).values(insertStory).returning();
-    return story;
+    const { data, error } = await supabase
+      .from('generated_stories')
+      .insert(insertStory)
+      .select()
+      .single();
+
+    if (error) {
+      console.error('Error creating story:', error);
+      throw new Error(`Failed to create story: ${error.message}`);
+    }
+
+    return data;
   }
 
   async getGeneratedStoryBySpaceId(spaceId: string): Promise<GeneratedStory | undefined> {
-    const [story] = await db
-      .select()
-      .from(generatedStories)
-      .where(eq(generatedStories.spaceId, spaceId))
-      .limit(1);
-    return story;
+    const { data, error } = await supabase
+      .from('generated_stories')
+      .select('*')
+      .eq('space_id', spaceId)
+      .single();
+
+    if (error) {
+      // Not found is not an error - return undefined
+      if (error.code === 'PGRST116') {
+        return undefined;
+      }
+      console.error('Error fetching story:', error);
+      throw new Error(`Failed to fetch story: ${error.message}`);
+    }
+
+    return data;
   }
 
   async updateGeneratedStory(spaceId: string, insertStory: InsertGeneratedStory): Promise<GeneratedStory> {
+    // First check if story exists
     const existing = await this.getGeneratedStoryBySpaceId(spaceId);
-    
+
     if (existing) {
-      const [updated] = await db
-        .update(generatedStories)
-        .set(insertStory)
-        .where(eq(generatedStories.spaceId, spaceId))
-        .returning();
-      return updated;
+      // Update existing story
+      const { data, error } = await supabase
+        .from('generated_stories')
+        .update({ story_text: insertStory.story_text })
+        .eq('space_id', spaceId)
+        .select()
+        .single();
+
+      if (error) {
+        console.error('Error updating story:', error);
+        throw new Error(`Failed to update story: ${error.message}`);
+      }
+
+      return data;
     } else {
+      // Create new story
       return await this.createGeneratedStory(insertStory);
     }
   }
 }
 
-export const storage = new DatabaseStorage();
+// Export singleton instance
+export const storage = new SupabaseStorage();
