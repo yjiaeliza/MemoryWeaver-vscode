@@ -5,6 +5,7 @@ import html2canvas from "html2canvas";
 import { Download, ArrowLeft, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { useToast } from "@/hooks/use-toast";
 import type { GeneratedStory } from "@shared/schema";
 
 interface PhotoCaption {
@@ -22,6 +23,7 @@ export default function MemoryBook() {
   const { spaceId } = useParams<{ spaceId: string }>();
   const posterRef = useRef<HTMLDivElement>(null);
   const [isDownloading, setIsDownloading] = useState(false);
+  const { toast } = useToast();
 
   const { data: generatedStory, isLoading } = useQuery<GeneratedStory | null>({
     queryKey: ['/api/generated-story', spaceId],
@@ -39,14 +41,60 @@ export default function MemoryBook() {
       })()
     : null;
 
+  const waitForImages = async (images: HTMLImageElement[], timeoutMs: number): Promise<boolean> => {
+    const imageLoadPromises = images.map((img) => {
+      if (img.complete) {
+        return Promise.resolve();
+      }
+      return new Promise<void>((resolve) => {
+        img.onload = () => resolve();
+        img.onerror = () => resolve();
+      });
+    });
+
+    let timeoutId: NodeJS.Timeout | null = null;
+    const timeoutPromise = new Promise<void>((_, reject) => {
+      timeoutId = setTimeout(() => reject(new Error('Image loading timeout')), timeoutMs);
+    });
+
+    try {
+      await Promise.race([
+        Promise.all(imageLoadPromises),
+        timeoutPromise
+      ]);
+      if (timeoutId) clearTimeout(timeoutId);
+      return true;
+    } catch {
+      if (timeoutId) clearTimeout(timeoutId);
+      return false;
+    }
+  };
+
   const handleDownloadImage = async () => {
     if (!posterRef.current) return;
     
     setIsDownloading(true);
     try {
+      // Wait for all images to load with 5-second timeout
+      const images = Array.from(posterRef.current.querySelectorAll('img')) as HTMLImageElement[];
+      const imagesLoaded = await waitForImages(images, 5000);
+
+      if (!imagesLoaded) {
+        toast({
+          title: "Images still loading",
+          description: "Some images are still loading. Please wait a moment before exporting.",
+          variant: "destructive",
+        });
+        setIsDownloading(false);
+        return;
+      }
+
+      // Capture with html2canvas using CORS settings
       const canvas = await html2canvas(posterRef.current, {
         backgroundColor: '#f5f1e8',
         scale: 2,
+        useCORS: true,
+        allowTaint: false,
         logging: false,
         windowWidth: 1080,
         windowHeight: posterRef.current.scrollHeight,
@@ -56,8 +104,18 @@ export default function MemoryBook() {
       link.download = `memory-poster-${spaceId}-${Date.now()}.png`;
       link.href = canvas.toDataURL('image/png');
       link.click();
+      
+      toast({
+        title: "Download complete!",
+        description: "Your memory poster has been saved.",
+      });
     } catch (error) {
       console.error('Error downloading image:', error);
+      toast({
+        title: "Download failed",
+        description: "There was an error creating your poster image. Please try again.",
+        variant: "destructive",
+      });
     } finally {
       setIsDownloading(false);
     }
@@ -181,6 +239,7 @@ export default function MemoryBook() {
                         <img
                           src={item.photoUrl}
                           alt={item.caption}
+                          crossOrigin="anonymous"
                           className="w-full h-64 object-cover rounded"
                           data-testid={`photo-image-${index}`}
                         />
