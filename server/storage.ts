@@ -1,5 +1,7 @@
-import { type Memory, type InsertMemory, type GeneratedStory, type InsertGeneratedStory } from "@shared/schema";
+import { type Memory, type InsertMemory, type GeneratedStory, type InsertGeneratedStory, memories, generatedStories } from "@shared/schema";
 import { randomUUID } from "crypto";
+import { db } from "./db";
+import { eq } from "drizzle-orm";
 
 export interface IStorage {
   createMemory(memory: InsertMemory): Promise<Memory>;
@@ -63,4 +65,48 @@ export class MemStorage implements IStorage {
   }
 }
 
-export const storage = new MemStorage();
+export class DatabaseStorage implements IStorage {
+  async createMemory(insertMemory: InsertMemory): Promise<Memory> {
+    const [memory] = await db.insert(memories).values(insertMemory).returning();
+    return memory;
+  }
+
+  async getMemoriesBySpaceId(spaceId: string): Promise<Memory[]> {
+    return await db
+      .select()
+      .from(memories)
+      .where(eq(memories.spaceId, spaceId))
+      .orderBy(memories.createdAt);
+  }
+
+  async createGeneratedStory(insertStory: InsertGeneratedStory): Promise<GeneratedStory> {
+    const [story] = await db.insert(generatedStories).values(insertStory).returning();
+    return story;
+  }
+
+  async getGeneratedStoryBySpaceId(spaceId: string): Promise<GeneratedStory | undefined> {
+    const [story] = await db
+      .select()
+      .from(generatedStories)
+      .where(eq(generatedStories.spaceId, spaceId))
+      .limit(1);
+    return story;
+  }
+
+  async updateGeneratedStory(spaceId: string, insertStory: InsertGeneratedStory): Promise<GeneratedStory> {
+    const existing = await this.getGeneratedStoryBySpaceId(spaceId);
+    
+    if (existing) {
+      const [updated] = await db
+        .update(generatedStories)
+        .set(insertStory)
+        .where(eq(generatedStories.spaceId, spaceId))
+        .returning();
+      return updated;
+    } else {
+      return await this.createGeneratedStory(insertStory);
+    }
+  }
+}
+
+export const storage = new DatabaseStorage();
