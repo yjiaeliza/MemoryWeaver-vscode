@@ -317,3 +317,187 @@
     inset: -1px;
   }
 }
+
+/* Scrapbook Frame Styles */
+
+/* Polaroid Frame - Classic instant photo look */
+.polaroid-frame {
+  background: #ffffff;
+  padding: 1rem;
+  padding-bottom: 3rem;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15), 0 1px 3px rgba(0, 0, 0, 0.1);
+  transition: transform 0.3s ease;
+  position: relative;
+}
+
+.polaroid-frame:hover {
+  transform: scale(1.02);
+}
+
+.polaroid-frame img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+/* Torn Edge Frame - Paper torn effect (html2canvas compatible) */
+.torn-edge-frame {
+  position: relative;
+  background: #faf8f4;
+  padding: 0.75rem;
+  box-shadow: 
+    0 3px 8px rgba(0, 0, 0, 0.2),
+    inset 2px 2px 4px rgba(0, 0, 0, 0.05),
+    inset -2px -2px 4px rgba(255, 255, 255, 0.5);
+  border: 2px solid #e8dcc8;
+  border-radius: 2px;
+}
+
+/* Create jagged torn edges using multiple box shadows */
+.torn-edge-frame::before {
+  content: '';
+  position: absolute;
+  inset: -3px;
+  background: repeating-linear-gradient(
+    45deg,
+    #e8dcc8 0px,
+    #e8dcc8 2px,
+    transparent 2px,
+    transparent 4px
+  );
+  opacity: 0.3;
+  z-index: -1;
+  pointer-events: none;
+}
+
+/* Add rough texture to the frame */
+.torn-edge-frame::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image: 
+    repeating-linear-gradient(90deg, transparent 0px, rgba(0,0,0,0.02) 1px, transparent 2px),
+    repeating-linear-gradient(0deg, transparent 0px, rgba(0,0,0,0.02) 1px, transparent 2px);
+  pointer-events: none;
+}
+
+.torn-edge-frame img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  position: relative;
+  z-index: 1;
+}
+
+/* Scotch Tape Frame - Tape pieces on corners */
+.scotch-tape-frame {
+  position: relative;
+  background: #ffffff;
+  padding: 0.25rem;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.12);
+}
+
+.scotch-tape-frame::before,
+.scotch-tape-frame::after {
+  content: '';
+  position: absolute;
+  top: -8px;
+  width: 60px;
+  height: 25px;
+  background: rgba(255, 248, 220, 0.7);
+  border: 1px solid rgba(210, 180, 140, 0.3);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  z-index: 10;
+}
+
+.scotch-tape-frame::before {
+  left: 15%;
+  transform: rotate(-5deg);
+}
+
+.scotch-tape-frame::after {
+  right: 15%;
+  transform: rotate(5deg);
+}
+
+.scotch-tape-frame img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+/* Regular Photo - Simple rounded corners with rotation */
+.regular-photo {
+  background: #ffffff;
+  padding: 0.5rem;
+  border-radius: 8px;
+  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.15);
+  transition: transform 0.3s ease;
+}
+
+.regular-photo:hover {
+  transform: scale(1.03) !important;
+}
+
+.regular-photo img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  border-radius: 4px;
+}
+
+/* Scrapbook Grid Layout - Asymmetric CSS Grid */
+.scrapbook-grid {
+  display: grid;
+  grid-template-columns: repeat(12, 1fr);
+  gap: 2rem 1.5rem;
+  width: 100%;
+  max-width: 1080px;
+  margin: 0 auto;
+  padding: 2rem;
+  position: relative;
+}
+
+.scrapbook-grid-item {
+  position: relative;
+  transition: transform 0.3s ease;
+}
+
+.scrapbook-grid-item:hover {
+  z-index: 10;
+}
+
+/* Define asymmetric grid placement patterns */
+.scrapbook-grid-item:nth-child(6n+1) {
+  grid-column: span 7;
+  grid-row: span 2;
+}
+
+.scrapbook-grid-item:nth-child(6n+2) {
+  grid-column: span 5;
+  grid-row: span 2;
+}
+
+.scrapbook-grid-item:nth-child(6n+3) {
+  grid-column: span 6;
+  grid-row: span 2;
+}
+
+.scrapbook-grid-item:nth-child(6n+4) {
+  grid-column: span 6;
+  grid-row: span 2;
+}
+
+.scrapbook-grid-item:nth-child(6n+5) {
+  grid-column: span 8;
+  grid-row: span 2;
+}
+
+.scrapbook-grid-item:nth-child(6n+6) {
+  grid-column: span 4;
+  grid-row: span 2;
+}

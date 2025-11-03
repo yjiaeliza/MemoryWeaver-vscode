@@ -1,0 +1,34 @@
+**First Prompt - Frame System & Basic Layout:**
+
+---
+
+**Project Context:**  
+We are building a digital scrapbook layout in a React/TypeScript component (`memorybook.tsx`). The current layout is a simple alternating left-right list. We want to transform it into a visually rich, collage-style long image.
+
+**Current Task (Part 1/3): Implement the Diverse Frame System & Basic Asymmetric Layout**
+
+**Requirements:**
+
+1. **Create CSS classes for at least 4 distinct photo frames:**
+   - `.polaroid-frame`: White background, internal padding, extra space at the bottom (for caption), subtle shadow.
+   - `.torn-edge-frame`: Simulates a torn paper edge (using CSS `mask-image` or a background image for the torn effect).
+   - `.scotch-tape-frame`: Uses `::before` and/or `::after` pseudo-elements to create semi-transparent "tape" pieces on the top-left and top-right corners of the image.
+   - `.regular-photo`: A standard rounded corner image but with a slight random rotation applied.
+
+2. **Establish a basic asymmetric CSS Grid layout:**
+   - The container should use CSS Grid.
+   - Define a grid template that allows for overlapping and non-uniform placement (e.g., some items span multiple rows/columns).
+   - Incorporate a gentle, random rotation (-3deg to +3deg) for each photo item to avoid a rigid look.
+   - Plan for a vertical, long-scroll container.
+
+3. **Technical Constraints:**
+   - Must work within the existing React/TypeScript environment.
+   - Use inline styles or CSS classes applied via JSX for dynamic properties like rotation.
+   - Ensure the final structure can be captured correctly by `html2canvas` (avoid complex CSS that might not render to canvas properly).
+
+**Expected Output:**
+- Provide the modified HTML (JSX) structure for the scrapbook container and photo items.
+- Provide the corresponding CSS styles (either as a stylesheet or JSX inline styles) for the frame classes and the grid layout.
+- The photos should be placed in an interesting, non-linear arrangement.
+
+**Please proceed by generating the necessary JSX and CSS code to achieve this first part.**

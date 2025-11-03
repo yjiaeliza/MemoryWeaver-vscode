@@ -19,6 +19,20 @@ interface StoryData {
   captions: PhotoCaption[];
 }
 
+// Frame class options for diverse scrapbook look
+const FRAME_CLASSES = ['polaroid-frame', 'torn-edge-frame', 'scotch-tape-frame', 'regular-photo'];
+
+// Helper to get random frame class based on index (deterministic)
+const getFrameClass = (index: number): string => {
+  return FRAME_CLASSES[index % FRAME_CLASSES.length];
+};
+
+// Helper to get random rotation between -3deg and +3deg (deterministic based on index)
+const getRandomRotation = (index: number): number => {
+  const rotations = [-3, -2.5, -2, -1.5, -1, -0.5, 0, 0.5, 1, 1.5, 2, 2.5, 3];
+  return rotations[index % rotations.length];
+};
+
 export default function MemoryBook() {
   const { spaceId } = useParams<{ spaceId: string }>();
   const posterRef = useRef<HTMLDivElement>(null);
@@ -216,61 +230,40 @@ export default function MemoryBook() {
             </div>
           </div>
 
-          {/* Photo Grid with Captions */}
-          <div className="space-y-12">
+          {/* Scrapbook Grid with Diverse Frames */}
+          <div className="scrapbook-grid">
             {storyData.captions.map((item, index) => {
-              const isEven = index % 2 === 0;
-              const rotation = index % 3 === 0 ? 'rotate-[-1deg]' : index % 3 === 1 ? 'rotate-[1deg]' : 'rotate-[-0.5deg]';
+              const frameClass = getFrameClass(index);
+              const rotation = getRandomRotation(index);
               
               return (
                 <div
                   key={index}
-                  className={`flex gap-6 items-start ${isEven ? 'flex-row' : 'flex-row-reverse'}`}
+                  className="scrapbook-grid-item"
                   data-testid={`photo-item-${index}`}
+                  style={{ transform: `rotate(${rotation}deg)` }}
                 >
-                  {/* Photo Frame */}
-                  <div className={`flex-1 ${rotation} transition-transform hover:rotate-0`}>
-                    <div className="relative group">
-                      {/* Washi Tape Decoration */}
-                      <div className="absolute -top-4 left-1/2 -translate-x-1/2 w-24 h-8 bg-gradient-to-r from-[#d4a574]/40 to-[#c9985f]/40 backdrop-blur-sm rounded-sm transform rotate-1 z-10" />
-                      
-                      {/* Photo Container */}
-                      <div className="bg-white p-4 rounded-lg shadow-[0_4px_12px_rgba(0,0,0,0.15)] border border-[#e8dcc8]">
-                        <img
-                          src={item.photoUrl}
-                          alt={item.caption}
-                          crossOrigin="anonymous"
-                          className="w-full h-64 object-cover rounded"
-                          data-testid={`photo-image-${index}`}
-                        />
-                      </div>
-                      
-                      {/* Decorative Corner */}
-                      <div className="absolute -bottom-2 -right-2 w-8 h-8 border-r-2 border-b-2 border-[#d4a574]/30 rounded-br-lg" />
-                    </div>
+                  {/* Photo Frame with diverse styles */}
+                  <div className={frameClass}>
+                    <img
+                      src={item.photoUrl}
+                      alt={item.caption}
+                      crossOrigin="anonymous"
+                      className="w-full h-64 object-cover"
+                      data-testid={`photo-image-${index}`}
+                    />
                   </div>
 
-                  {/* Caption */}
-                  <div className="flex-1 flex items-center">
-                    <div className="w-full">
-                      <div className="relative bg-white/60 backdrop-blur-sm p-6 rounded-lg border-l-4 border-[#d4a574] shadow-sm">
-                        <p className="font-serif text-lg leading-relaxed text-[#5c4a3a] mb-2" data-testid={`photo-caption-${index}`}>
-                          {item.caption}
-                        </p>
-                        <div className="flex items-center gap-2">
-                          <span className="text-2xl" data-testid={`photo-emoji-${index}`}>{item.emoji}</span>
-                          <div className="flex-1 h-px bg-gradient-to-r from-[#d4a574]/40 to-transparent" />
-                        </div>
+                  {/* Caption below photo */}
+                  <div className="mt-4">
+                    <div className="relative bg-white/80 backdrop-blur-sm p-4 rounded-lg border-l-4 border-[#d4a574] shadow-sm">
+                      <p className="font-serif text-base leading-relaxed text-[#5c4a3a] mb-1" data-testid={`photo-caption-${index}`}>
+                        {item.caption}
+                      </p>
+                      <div className="flex items-center gap-2">
+                        <span className="text-xl" data-testid={`photo-emoji-${index}`}>{item.emoji}</span>
+                        <div className="flex-1 h-px bg-gradient-to-r from-[#d4a574]/40 to-transparent" />
                       </div>
-                      
-                      {/* Decorative Dots */}
-                      {index < storyData.captions.length - 1 && (
-                        <div className="flex justify-center gap-1 mt-4">
-                          <div className="w-1 h-1 rounded-full bg-[#d4a574]/40" />
-                          <div className="w-1 h-1 rounded-full bg-[#d4a574]/40" />
-                          <div className="w-1 h-1 rounded-full bg-[#d4a574]/40" />
-                        </div>
-                      )}
                     </div>
                   </div>
                 </div>
