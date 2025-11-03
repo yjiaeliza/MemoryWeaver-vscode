@@ -4,12 +4,33 @@ import { storage } from "./storage";
 import { ObjectStorageService, ObjectNotFoundError } from "./objectStorage";
 import { insertMemorySchema } from "@shared/schema";
 import { generateMemoryStory } from "./openai";
+import { setupAuth, isAuthenticated } from "./replitAuth";
 
 export async function registerRoutes(app: Express): Promise<Server> {
+  // Setup authentication middleware
+  await setupAuth(app);
+
+  // Auth route - Get current user (NOT protected - used to check auth state)
+  app.get('/api/auth/user', async (req: any, res) => {
+    try {
+      // Check if user is authenticated
+      if (!req.isAuthenticated() || !req.user?.claims?.sub) {
+        return res.json(null);
+      }
+
+      const userId = req.user.claims.sub;
+      const user = await storage.getUser(userId);
+      res.json(user || null);
+    } catch (error) {
+      console.error("Error fetching user:", error);
+      res.status(500).json({ message: "Failed to fetch user" });
+    }
+  });
+
   const objectStorageService = new ObjectStorageService();
 
-  // Object storage: Get presigned URL for uploading photos
-  app.post("/api/objects/upload", async (req, res) => {
+  // Object storage: Get presigned URL for uploading photos (protected)
+  app.post("/api/objects/upload", isAuthenticated, async (req, res) => {
     try {
       const uploadURL = await objectStorageService.getObjectEntityUploadURL();
       res.json({ uploadURL });
@@ -19,7 +40,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Object storage: Serve uploaded photos (public access for this use case)
+  // Object storage: Serve uploaded photos (public access for sharing)
   app.get("/objects/:objectPath(*)", async (req, res) => {
     try {
       const objectFile = await objectStorageService.getObjectEntityFile(req.path);
@@ -33,9 +54,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Create a new memory
-  app.post("/api/memories", async (req, res) => {
+  // Create a new memory (protected)
+  app.post("/api/memories", isAuthenticated, async (req: any, res) => {
     try {
+      const userId = req.user.claims.sub;
       const validatedData = insertMemorySchema.parse(req.body);
       
       // Normalize the photo URL to use the /objects/ path format
@@ -45,6 +67,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       const memory = await storage.createMemory({
         ...validatedData,
+        userId,
         photoUrl: normalizedPhotoUrl,
       });
 
@@ -55,8 +78,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Get all memories for a space
-  app.get("/api/memories/:spaceId", async (req, res) => {
+  // Get all memories for a space (protected)
+  app.get("/api/memories/:spaceId", isAuthenticated, async (req, res) => {
     try {
       const { spaceId } = req.params;
       const memories = await storage.getMemoriesBySpaceId(spaceId);
@@ -67,8 +90,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Get generated story for a space
-  app.get("/api/generated-story/:spaceId", async (req, res) => {
+  // Get generated story for a space (protected)
+  app.get("/api/generated-story/:spaceId", isAuthenticated, async (req, res) => {
     try {
       const { spaceId } = req.params;
       const story = await storage.getGeneratedStoryBySpaceId(spaceId);
@@ -79,8 +102,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Generate a memory book story using OpenAI
-  app.post("/api/generate-story", async (req, res) => {
+  // Generate a memory book story using OpenAI (protected)
+  app.post("/api/generate-story", isAuthenticated, async (req, res) => {
     try {
       const { spaceId } = req.body;
       

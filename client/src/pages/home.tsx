@@ -11,7 +11,8 @@ import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/hooks/use-toast";
-import { BookOpen, Upload, Sparkles, Image as ImageIcon } from "lucide-react";
+import { useAuth } from "@/hooks/useAuth";
+import { BookOpen, Upload, Sparkles, Image as ImageIcon, LogOut } from "lucide-react";
 
 export default function Home() {
   const [spaceId, setSpaceId] = useState("");
@@ -19,6 +20,7 @@ export default function Home() {
   const [note, setNote] = useState("");
   const [uploadedPhotos, setUploadedPhotos] = useState<string[]>([]);
   const { toast } = useToast();
+  const { user } = useAuth();
 
   const { data: memories = [], isLoading: memoriesLoading } = useQuery<Memory[]>({
     queryKey: ["/api/memories", spaceId],
@@ -104,13 +106,24 @@ export default function Home() {
       {/* Header */}
       <header className="sticky top-0 z-50 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
         <div className="container mx-auto px-4 py-6 max-w-6xl">
-          <div className="text-center">
-            <h1 className="text-4xl md:text-5xl font-handwritten font-bold text-foreground mb-2" data-testid="text-app-title">
-              YouSpace
-            </h1>
-            <p className="text-lg font-serif italic text-muted-foreground" data-testid="text-tagline">
-              Your Shared Memory Book
-            </p>
+          <div className="flex justify-between items-center">
+            <div className="text-center flex-1">
+              <h1 className="text-4xl md:text-5xl font-handwritten font-bold text-foreground mb-2" data-testid="text-app-title">
+                YouSpace
+              </h1>
+              <p className="text-lg font-serif italic text-muted-foreground" data-testid="text-tagline">
+                Your Shared Memory Book
+              </p>
+            </div>
+            <Button
+              variant="ghost"
+              onClick={() => window.location.href = '/api/logout'}
+              className="ml-4"
+              data-testid="button-logout"
+            >
+              <LogOut className="w-4 h-4 mr-2" />
+              Sign Out
+            </Button>
           </div>
         </div>
       </header>
