@@ -62,7 +62,7 @@ YouSpace is a warm, cozy web application where users can continuously upload pho
 - `POST /api/memories` - Create new memory with photo and note
 - `GET /api/memories/:spaceId` - Get all memories for a space
 - `POST /api/generate-story` - Generate AI story from memories
-- `GET /api/story/:spaceId` - Get generated story for a space
+- `GET /api/generated-story/:spaceId` - Get generated story for a space
 
 ### Services
 - **Supabase Service** (server/supabase.ts): Initialize Supabase client and handle photo uploads
@@ -129,21 +129,30 @@ YouSpace is a warm, cozy web application where users can continuously upload pho
 10. User can download the full journal as a single image
 
 ## AI Output Format
-The AI generates context-aware hand journals with:
-- **Context Analysis**: Automatically detects scenario type from notes/photos
-  - Travel → journey, landscapes, discoveries
-  - Work/Project → process, teamwork, reflections, progress
-  - Study → learning moments, challenges, insights
-  - Daily Life → small moments, mood, personal growth
-  - Events → celebrations, gatherings, special occasions
-  - Friendship/Relationships → shared memories, feelings, connections
+The AI generates context-aware hand journals with depth, realism, and emotional authenticity:
+
+### Context Analysis & Emotional Tone
+Automatically detects scenario type and adapts emotional tone accordingly:
+- **Travel** → Wonder, reflection, landscape focus, sense of place
+- **Work/Project** → Growth, teamwork, purpose, learning
+- **Study** → Curiosity, progress, inner thoughts, breakthroughs
+- **Daily Life** → Stillness, small joys, subtle changes, quiet moments
+- **Events** → Excitement, connection, atmosphere, shared energy
+- **Friendship/Relationships** → Warmth, intimacy, nostalgia, presence
+
+### Writing Style
 - **Voice**: First-person ("I") - writes as if the person experiencing these moments
 - **Tone**: Calm, reflective, real-life diary style (not poetic or fictional)
-- **Structure**: Chronological sections with emoji markers matching the scenario (e.g., 🌿 Morning Notes, 🏙 Project Wrap-up, 💬 Reflections)
-- **Content**: Short, authentic sentences (3-4 per section) referencing uploaded notes/photos
+- **Pacing**: Authentic and unhurried - small, personal reflections instead of generic summaries
+- **Sensory Details**: Includes sound, light, smell, weather, time of day, and physical sensations to make moments vivid and grounded
+- **Natural Transitions**: Uses phrases like "Later in the afternoon...", "By the time we got home...", "Around midday..." to connect sections organically
+
+### Structure & Format
 - **Format**: Markdown with # title and ## section headings
-- **Length**: 300-600 words
-- **Style**: Realistic and human - avoids exaggeration and inventing unrelated events
+- **Sections**: Chronological organization with emoji markers matching the scenario (e.g., 🌄 Early Morning, 🏞 Up the Ridge, 💼 Getting Started)
+- **Content**: 3-4 short, authentic sentences per section
+- **Length**: 300-600 words total
+- **Authenticity**: References only uploaded photos and notes - no invention or exaggeration
 
 ## File Structure
 ```

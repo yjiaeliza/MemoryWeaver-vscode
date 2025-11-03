@@ -109,7 +109,7 @@ export default function Home() {
   const generateStoryMutation = useMutation({
     mutationFn: () => apiRequest("POST", "/api/generate-story", { spaceId }),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/story", spaceId] });
+      queryClient.invalidateQueries({ queryKey: ["/api/generated-story", spaceId] });
       toast({
         title: "Memory book generated!",
         description: "Opening your personalized journal...",

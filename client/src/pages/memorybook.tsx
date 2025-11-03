@@ -13,7 +13,7 @@ export default function MemoryBook() {
   const [isDownloading, setIsDownloading] = useState(false);
 
   const { data: generatedStory, isLoading } = useQuery<GeneratedStory | null>({
-    queryKey: ['/api/story', spaceId],
+    queryKey: ['/api/generated-story', spaceId],
     enabled: !!spaceId,
   });
 
