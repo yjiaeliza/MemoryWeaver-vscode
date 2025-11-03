@@ -325,13 +325,19 @@
   background: #ffffff;
   padding: 1rem;
   padding-bottom: 3rem;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15), 0 1px 3px rgba(0, 0, 0, 0.1);
-  transition: transform 0.3s ease;
+  box-shadow: 
+    0 2px 4px rgba(0, 0, 0, 0.08),
+    0 4px 8px rgba(0, 0, 0, 0.1),
+    0 8px 16px rgba(0, 0, 0, 0.12);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   position: relative;
 }
 
 .polaroid-frame:hover {
-  transform: scale(1.02);
+  box-shadow: 
+    0 4px 8px rgba(0, 0, 0, 0.1),
+    0 8px 16px rgba(0, 0, 0, 0.12),
+    0 16px 32px rgba(0, 0, 0, 0.15);
 }
 
 .polaroid-frame img {
@@ -347,11 +353,21 @@
   background: #faf8f4;
   padding: 0.75rem;
   box-shadow: 
-    0 3px 8px rgba(0, 0, 0, 0.2),
+    0 2px 6px rgba(0, 0, 0, 0.1),
+    0 4px 12px rgba(0, 0, 0, 0.15),
     inset 2px 2px 4px rgba(0, 0, 0, 0.05),
     inset -2px -2px 4px rgba(255, 255, 255, 0.5);
   border: 2px solid #e8dcc8;
   border-radius: 2px;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.torn-edge-frame:hover {
+  box-shadow: 
+    0 4px 12px rgba(0, 0, 0, 0.12),
+    0 8px 20px rgba(0, 0, 0, 0.18),
+    inset 2px 2px 4px rgba(0, 0, 0, 0.05),
+    inset -2px -2px 4px rgba(255, 255, 255, 0.5);
 }
 
 /* Create jagged torn edges using multiple box shadows */
@@ -396,7 +412,16 @@
   position: relative;
   background: #ffffff;
   padding: 0.25rem;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.12);
+  box-shadow: 
+    0 2px 4px rgba(0, 0, 0, 0.08),
+    0 4px 10px rgba(0, 0, 0, 0.12);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.scotch-tape-frame:hover {
+  box-shadow: 
+    0 4px 8px rgba(0, 0, 0, 0.1),
+    0 8px 18px rgba(0, 0, 0, 0.14);
 }
 
 .scotch-tape-frame::before,
@@ -434,12 +459,16 @@
   background: #ffffff;
   padding: 0.5rem;
   border-radius: 8px;
-  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.15);
-  transition: transform 0.3s ease;
+  box-shadow: 
+    0 2px 5px rgba(0, 0, 0, 0.1),
+    0 4px 12px rgba(0, 0, 0, 0.12);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .regular-photo:hover {
-  transform: scale(1.03) !important;
+  box-shadow: 
+    0 4px 10px rgba(0, 0, 0, 0.12),
+    0 8px 20px rgba(0, 0, 0, 0.15);
 }
 
 .regular-photo img {
@@ -450,56 +479,235 @@
   border-radius: 4px;
 }
 
-/* Scrapbook Grid Layout - Asymmetric CSS Grid */
+/* ===== SCRAPBOOK GRID LAYOUT SYSTEM ===== */
+
+/* Base Grid Container */
 .scrapbook-grid {
   display: grid;
   grid-template-columns: repeat(12, 1fr);
-  gap: 2rem 1.5rem;
+  gap: 3rem 2rem;
   width: 100%;
   max-width: 1080px;
   margin: 0 auto;
-  padding: 2rem;
+  padding: 3rem 2rem;
   position: relative;
 }
 
+/* Grid Item Base Styles with Enhanced Depth */
 .scrapbook-grid-item {
   position: relative;
-  transition: transform 0.3s ease;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  margin: 1rem 0;
+  --item-rotation: 0deg;
+  transform: rotate(var(--item-rotation));
 }
 
+/* Enhanced Hover State with Depth - Combines rotation with lift */
 .scrapbook-grid-item:hover {
-  z-index: 10;
+  z-index: 20 !important;
+  transform: rotate(var(--item-rotation)) translateY(-4px) scale(1.02);
 }
 
-/* Define asymmetric grid placement patterns */
-.scrapbook-grid-item:nth-child(6n+1) {
+.scrapbook-grid-item:hover > * {
+  box-shadow: 
+    0 8px 24px rgba(0, 0, 0, 0.15),
+    0 4px 12px rgba(0, 0, 0, 0.1),
+    0 2px 6px rgba(0, 0, 0, 0.08);
+}
+
+/* Grid Template Pattern 1: Balanced Flow (default) */
+.scrapbook-grid.pattern-1 .scrapbook-grid-item:nth-child(8n+1) {
   grid-column: span 7;
   grid-row: span 2;
+  z-index: 5;
 }
 
-.scrapbook-grid-item:nth-child(6n+2) {
+.scrapbook-grid.pattern-1 .scrapbook-grid-item:nth-child(8n+2) {
   grid-column: span 5;
   grid-row: span 2;
+  z-index: 4;
 }
 
-.scrapbook-grid-item:nth-child(6n+3) {
+.scrapbook-grid.pattern-1 .scrapbook-grid-item:nth-child(8n+3) {
+  grid-column: span 6;
+  grid-row: span 1;
+  z-index: 6;
+  margin-top: -2rem;
+}
+
+.scrapbook-grid.pattern-1 .scrapbook-grid-item:nth-child(8n+4) {
   grid-column: span 6;
   grid-row: span 2;
+  z-index: 3;
 }
 
-.scrapbook-grid-item:nth-child(6n+4) {
-  grid-column: span 6;
-  grid-row: span 2;
-}
-
-.scrapbook-grid-item:nth-child(6n+5) {
+.scrapbook-grid.pattern-1 .scrapbook-grid-item:nth-child(8n+5) {
   grid-column: span 8;
   grid-row: span 2;
+  z-index: 7;
 }
 
-.scrapbook-grid-item:nth-child(6n+6) {
+.scrapbook-grid.pattern-1 .scrapbook-grid-item:nth-child(8n+6) {
   grid-column: span 4;
+  grid-row: span 1;
+  z-index: 8;
+  margin-top: -1.5rem;
+}
+
+.scrapbook-grid.pattern-1 .scrapbook-grid-item:nth-child(8n+7) {
+  grid-column: span 5;
   grid-row: span 2;
+  z-index: 4;
+}
+
+.scrapbook-grid.pattern-1 .scrapbook-grid-item:nth-child(8n+8) {
+  grid-column: span 7;
+  grid-row: span 2;
+  z-index: 5;
+}
+
+/* Grid Template Pattern 2: Dense & Sparse Alternation */
+.scrapbook-grid.pattern-2 .scrapbook-grid-item:nth-child(6n+1) {
+  grid-column: span 8;
+  grid-row: span 2;
+  z-index: 6;
+}
+
+.scrapbook-grid.pattern-2 .scrapbook-grid-item:nth-child(6n+2) {
+  grid-column: span 4;
+  grid-row: span 1;
+  z-index: 7;
+  margin-top: -2.5rem;
+}
+
+.scrapbook-grid.pattern-2 .scrapbook-grid-item:nth-child(6n+3) {
+  grid-column: span 5;
+  grid-row: span 2;
+  z-index: 5;
+}
+
+.scrapbook-grid.pattern-2 .scrapbook-grid-item:nth-child(6n+4) {
+  grid-column: span 7;
+  grid-row: span 2;
+  z-index: 4;
+}
+
+.scrapbook-grid.pattern-2 .scrapbook-grid-item:nth-child(6n+5) {
+  grid-column: span 6;
+  grid-row: span 1;
+  z-index: 8;
+  margin-top: -1rem;
+}
+
+.scrapbook-grid.pattern-2 .scrapbook-grid-item:nth-child(6n+6) {
+  grid-column: span 6;
+  grid-row: span 2;
+  z-index: 3;
+}
+
+/* Grid Template Pattern 3: Diagonal Flow */
+.scrapbook-grid.pattern-3 .scrapbook-grid-item:nth-child(7n+1) {
+  grid-column: span 5;
+  grid-row: span 2;
+  z-index: 3;
+}
+
+.scrapbook-grid.pattern-3 .scrapbook-grid-item:nth-child(7n+2) {
+  grid-column: span 7;
+  grid-row: span 2;
+  z-index: 6;
+  margin-left: 1rem;
+}
+
+.scrapbook-grid.pattern-3 .scrapbook-grid-item:nth-child(7n+3) {
+  grid-column: span 6;
+  grid-row: span 1;
+  z-index: 7;
+  margin-top: -1.5rem;
+}
+
+.scrapbook-grid.pattern-3 .scrapbook-grid-item:nth-child(7n+4) {
+  grid-column: span 6;
+  grid-row: span 2;
+  z-index: 5;
+}
+
+.scrapbook-grid.pattern-3 .scrapbook-grid-item:nth-child(7n+5) {
+  grid-column: span 4;
+  grid-row: span 1;
+  z-index: 8;
+  margin-top: -2rem;
+}
+
+.scrapbook-grid.pattern-3 .scrapbook-grid-item:nth-child(7n+6) {
+  grid-column: span 8;
+  grid-row: span 2;
+  z-index: 4;
+}
+
+.scrapbook-grid.pattern-3 .scrapbook-grid-item:nth-child(7n+7) {
+  grid-column: span 7;
+  grid-row: span 2;
+  z-index: 6;
+}
+
+/* Grid Template Pattern 4: Organic Scatter */
+.scrapbook-grid.pattern-4 .scrapbook-grid-item:nth-child(9n+1) {
+  grid-column: span 6;
+  grid-row: span 2;
+  z-index: 5;
+}
+
+.scrapbook-grid.pattern-4 .scrapbook-grid-item:nth-child(9n+2) {
+  grid-column: span 6;
+  grid-row: span 1;
+  z-index: 6;
+  margin-top: -1rem;
+}
+
+.scrapbook-grid.pattern-4 .scrapbook-grid-item:nth-child(9n+3) {
+  grid-column: span 5;
+  grid-row: span 2;
+  z-index: 7;
+  margin-left: -0.5rem;
+}
+
+.scrapbook-grid.pattern-4 .scrapbook-grid-item:nth-child(9n+4) {
+  grid-column: span 7;
+  grid-row: span 2;
+  z-index: 4;
+}
+
+.scrapbook-grid.pattern-4 .scrapbook-grid-item:nth-child(9n+5) {
+  grid-column: span 4;
+  grid-row: span 1;
+  z-index: 8;
+  margin-top: -2rem;
+}
+
+.scrapbook-grid.pattern-4 .scrapbook-grid-item:nth-child(9n+6) {
+  grid-column: span 8;
+  grid-row: span 2;
+  z-index: 3;
+}
+
+.scrapbook-grid.pattern-4 .scrapbook-grid-item:nth-child(9n+7) {
+  grid-column: span 6;
+  grid-row: span 1;
+  z-index: 7;
+  margin-top: -1.5rem;
+}
+
+.scrapbook-grid.pattern-4 .scrapbook-grid-item:nth-child(9n+8) {
+  grid-column: span 6;
+  grid-row: span 2;
+  z-index: 5;
+}
+
+.scrapbook-grid.pattern-4 .scrapbook-grid-item:nth-child(9n+9) {
+  grid-column: span 7;
+  grid-row: span 2;
+  z-index: 6;
 }
 
 /* ===== TEXT NOTE STYLES ===== */

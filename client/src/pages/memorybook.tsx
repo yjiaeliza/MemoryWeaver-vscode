@@ -39,11 +39,26 @@ const getTextNoteStyle = (index: number): string => {
   return styles[index % styles.length];
 };
 
+// Helper to get grid pattern based on spaceId (deterministic per space)
+const getGridPattern = (spaceId: string): string => {
+  const patterns = ['pattern-1', 'pattern-2', 'pattern-3', 'pattern-4'];
+  // Simple hash function to get consistent pattern for same spaceId
+  let hash = 0;
+  for (let i = 0; i < spaceId.length; i++) {
+    hash = ((hash << 5) - hash) + spaceId.charCodeAt(i);
+    hash = hash & hash;
+  }
+  return patterns[Math.abs(hash) % patterns.length];
+};
+
 export default function MemoryBook() {
   const { spaceId } = useParams<{ spaceId: string }>();
   const posterRef = useRef<HTMLDivElement>(null);
   const [isDownloading, setIsDownloading] = useState(false);
   const { toast } = useToast();
+  
+  // Get consistent grid pattern for this space
+  const gridPattern = spaceId ? getGridPattern(spaceId) : 'pattern-1';
 
   const { data: generatedStory, isLoading } = useQuery<GeneratedStory | null>({
     queryKey: ['/api/generated-story', spaceId],
@@ -237,7 +252,7 @@ export default function MemoryBook() {
           </div>
 
           {/* Scrapbook Grid with Diverse Frames & Text Notes */}
-          <div className="scrapbook-grid">
+          <div className={`scrapbook-grid ${gridPattern}`}>
             {storyData.captions.map((item, index) => {
               const frameClass = getFrameClass(index);
               const rotation = getRandomRotation(index);
@@ -248,7 +263,9 @@ export default function MemoryBook() {
                   key={index}
                   className="scrapbook-grid-item"
                   data-testid={`photo-item-${index}`}
-                  style={{ transform: `rotate(${rotation}deg)` }}
+                  style={{ 
+                    '--item-rotation': `${rotation}deg`
+                  } as React.CSSProperties}
                 >
                   {/* Optional decorative label with connector for first photo */}
                   {index === 0 && (
