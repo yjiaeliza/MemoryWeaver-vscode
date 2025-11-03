@@ -33,6 +33,12 @@ const getRandomRotation = (index: number): number => {
   return rotations[index % rotations.length];
 };
 
+// Helper to get text note style (deterministic based on index)
+const getTextNoteStyle = (index: number): string => {
+  const styles = ['sticky-note-yellow', 'handwritten-paper', 'default'];
+  return styles[index % styles.length];
+};
+
 export default function MemoryBook() {
   const { spaceId } = useParams<{ spaceId: string }>();
   const posterRef = useRef<HTMLDivElement>(null);
@@ -230,11 +236,12 @@ export default function MemoryBook() {
             </div>
           </div>
 
-          {/* Scrapbook Grid with Diverse Frames */}
+          {/* Scrapbook Grid with Diverse Frames & Text Notes */}
           <div className="scrapbook-grid">
             {storyData.captions.map((item, index) => {
               const frameClass = getFrameClass(index);
               const rotation = getRandomRotation(index);
+              const textNoteStyle = getTextNoteStyle(index);
               
               return (
                 <div
@@ -243,6 +250,15 @@ export default function MemoryBook() {
                   data-testid={`photo-item-${index}`}
                   style={{ transform: `rotate(${rotation}deg)` }}
                 >
+                  {/* Optional decorative label with connector for first photo */}
+                  {index === 0 && (
+                    <div className="mb-2 flex justify-center">
+                      <div className="flag-label connector-dotted">
+                        First Memory
+                      </div>
+                    </div>
+                  )}
+
                   {/* Photo Frame with diverse styles */}
                   <div className={frameClass}>
                     <img
@@ -254,22 +270,50 @@ export default function MemoryBook() {
                     />
                   </div>
 
-                  {/* Caption below photo */}
-                  <div className="mt-4">
-                    <div className="relative bg-white/80 backdrop-blur-sm p-4 rounded-lg border-l-4 border-[#d4a574] shadow-sm">
-                      <p className="font-serif text-base leading-relaxed text-[#5c4a3a] mb-1" data-testid={`photo-caption-${index}`}>
-                        {item.caption}
-                      </p>
-                      <div className="flex items-center gap-2">
-                        <span className="text-xl" data-testid={`photo-emoji-${index}`}>{item.emoji}</span>
-                        <div className="flex-1 h-px bg-gradient-to-r from-[#d4a574]/40 to-transparent" />
+                  {/* Caption with varied text note styles */}
+                  <div className="mt-4 space-y-3">
+                    {textNoteStyle === 'sticky-note-yellow' ? (
+                      <>
+                        <div className="sticky-note-yellow">
+                          <p className="text-handwritten-md" data-testid={`photo-caption-${index}`}>
+                            {item.caption}
+                          </p>
+                        </div>
+                        <div className="flex items-center gap-2 pl-2">
+                          <span className="text-2xl" data-testid={`photo-emoji-${index}`}>{item.emoji}</span>
+                          <div className="flex-1 h-px bg-gradient-to-r from-[#d4a574]/40 to-transparent" />
+                        </div>
+                      </>
+                    ) : textNoteStyle === 'handwritten-paper' ? (
+                      <>
+                        <div className="handwritten-paper">
+                          <p className="text-handwritten-lg" data-testid={`photo-caption-${index}`}>
+                            {item.caption}
+                          </p>
+                        </div>
+                        <div className="flex items-center justify-end">
+                          <span className="mood-stamp" data-testid={`photo-emoji-${index}`}>{item.emoji}</span>
+                        </div>
+                      </>
+                    ) : (
+                      <div className="relative bg-white/80 backdrop-blur-sm p-4 rounded-lg border-l-4 border-[#d4a574] shadow-sm">
+                        <p className="text-serif-clean-md text-[#5c4a3a] mb-1" data-testid={`photo-caption-${index}`}>
+                          {item.caption}
+                        </p>
+                        <div className="flex items-center gap-2">
+                          <span className="text-xl" data-testid={`photo-emoji-${index}`}>{item.emoji}</span>
+                          <div className="flex-1 h-px bg-gradient-to-r from-[#d4a574]/40 to-transparent" />
+                        </div>
                       </div>
-                    </div>
+                    )}
                   </div>
                 </div>
               );
             })}
           </div>
+
+          {/* Decorative Divider */}
+          <div className="divider-dashed" />
 
           {/* Footer */}
           <div className="mt-16 pt-8 border-t-2 border-dashed border-[#d4a574]/30 text-center">
