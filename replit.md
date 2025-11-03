@@ -191,6 +191,29 @@ The AI generates short, poetic captions for each photo in a visual poster format
 - **Colors**: Warm browns and beiges (#5c4a3a, #d4a574, #8c7a6a), yellow (#fef9c3), kraft (#f5f0e8)
 - **html2canvas Compatible**: All CSS effects work with image export (gradients, borders, transforms only)
 
+### Layout Polish System (Part 3/3 Enhancement)
+- **Grid Pattern Variations**: 4 distinct patterns rotating deterministically based on spaceId hash:
+  1. **Balanced Flow**: 8-item cycle with even distribution, z-index 3-8
+  2. **Dense & Sparse**: 6-item cycle alternating tight clusters with open space
+  3. **Diagonal Flow**: 7-item cycle creating diagonal visual movement
+  4. **Organic Scatter**: 9-item cycle with natural scattered appearance
+- **Enhanced Depth & Layering**:
+  * Multi-layer shadow system on all frames (2-4 layers per frame)
+  * Strategic z-index values for intentional overlapping (base 3-8, hover 20)
+  * Negative margins (-2.5rem to -1rem) create authentic overlaps
+- **Spacing & Breathing Room**:
+  * Increased grid gap: 3rem vertical × 2rem horizontal
+  * Grid padding: 3rem vertical, 2rem horizontal
+  * Item margin: 1rem vertical for additional separation
+- **Hover Interactions** (html2canvas compatible):
+  * CSS custom property `--item-rotation` for deterministic rotation
+  * Base transform: `rotate(var(--item-rotation))`
+  * Hover combines rotation + lift: `rotate(var(--item-rotation)) translateY(-4px) scale(1.02)`
+  * Smooth cubic-bezier(0.4, 0, 0.2, 1) transition
+  * Enhanced 3-layer shadows on hover for depth effect
+- **Grid Pattern Selection**: Deterministic hash function ensures consistent layout across renders and exports
+- **html2canvas Export**: All effects use supported properties (transforms, shadows, gradients, borders)
+
 ### JSON Output Structure
 ```json
 {
