@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { useLocation } from "wouter";
 import { apiRequest, queryClient } from "@/lib/queryClient";
@@ -20,6 +20,15 @@ export default function Home() {
   const [uploadedPhoto, setUploadedPhoto] = useState<string | null>(null);
   const [isUploading, setIsUploading] = useState(false);
   const { toast } = useToast();
+
+  // Read spaceId from URL query parameter on mount
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const querySpaceId = params.get("spaceId");
+    if (querySpaceId) {
+      setSpaceId(querySpaceId);
+    }
+  }, []);
 
   const { data: memories = [], isLoading: memoriesLoading } = useQuery<Memory[]>({
     queryKey: ["/api/memories", spaceId],

@@ -15,10 +15,10 @@ YouSpace is a warm, cozy web application where users can continuously upload pho
 1. **Shared Spaces**: Multiple users can contribute to the same space via Space ID
 2. **Photo Uploads**: Upload photos using Supabase Storage
 3. **Memory Notes**: Add short notes to accompany each photo
-4. **Masonry Gallery**: Beautiful responsive masonry grid layout for photos
-5. **AI Hand Journal Generation**: Generate realistic, context-aware hand journals for all life scenarios (travel, work, study, daily life, events, relationships) in Markdown format using OpenAI (gpt-4o-mini)
-6. **Dedicated Journal Page**: View generated journals on a dedicated page at /memorybook/:spaceId with vertical scrollable layout
-7. **Download as Image**: Export the full journal as a single vertical image using html2canvas
+4. **Memory Cards Gallery**: Beautiful card-based layout for uploaded memories
+5. **Visual Poster Generation**: AI-generated scrapbook-style memory posters with photos and short captions using OpenAI (gpt-4o-mini)
+6. **Dedicated Poster Page**: View generated visual posters on a dedicated page at /memorybook/:spaceId with vertical scrollable layout
+7. **Download as Image**: Export the full poster as a single vertical image (1080px width) using html2canvas
 8. **No Authentication**: Public file uploading for simplicity (MVP)
 
 ## Tech Stack
@@ -94,26 +94,34 @@ YouSpace is a warm, cozy web application where users can continuously upload pho
    - Updated photo upload flow to use Supabase Storage SDK
    - Configured public bucket for photo access
 
-3. **AI Enhancement**:
-   - Changed from poetic stories to context-aware hand journals for all life scenarios
-   - AI analyzes content to determine scenario type (travel, work, study, daily life, events, relationships)
-   - Uses first-person voice ("I") with realistic, calm, reflective tone
-   - Output in Markdown format with emoji section markers matching the scenario
-   - Chronological organization with short, authentic sentences (3-4 per section)
-   - Avoids exaggeration and invention - references only uploaded photos and notes
+3. **AI Enhancement (Visual Poster Format)**:
+   - Changed from long journal entries to short, poetic photo captions (max 20 words each)
+   - AI generates one caption per photo with appropriate emoji
+   - Captions are calm, reflective, and scenario-aware
+   - Examples: "The sunlight fell perfectly on this street 🌿", "Quiet moments before everything began"
+   - Output stored as JSON with title and captions array
 
-4. **Frontend Updates**:
+4. **Frontend Updates (Visual Poster Design)**:
    - Removed Sign In/Sign Out UI
    - Restored simple display name input (no authentication)
-   - Created dedicated MemoryBook page at /memorybook/:spaceId
-   - Added Download as Image functionality using html2canvas
-   - Updated navigation flow to redirect to MemoryBook page after generation
-   - Removed inline story display from home page
+   - Created visual poster layout at /memorybook/:spaceId with scrapbook aesthetic
+   - Poster features:
+     * 1080px width vertical scrollable design
+     * Photos in rounded frames with decorative shadows
+     * Washi tape decorations on photos
+     * Alternating left/right photo-caption layout
+     * Short captions with emoji in styled boxes
+     * Beige paper texture background
+     * Handwritten fonts for title, serif for captions
+     * Decorative elements (dotted lines, corner accents)
+   - Download as Image functionality using html2canvas
+   - Updated navigation flow to redirect to MemoryBook poster page after generation
 
 ### Technical Notes
 - **Database**: Uses Supabase PostgreSQL with environment variables (SUPABASE_URL, SUPABASE_ANON_KEY)
 - **Storage**: Supabase Storage with public 'memories' bucket
-- **AI Output**: Documentary-style travel journal in Markdown format
+- **AI Output**: JSON format with title and array of photo captions
+- **Poster Format**: 1080px width, vertical scroll, scrapbook-style visual layout
 - **Authentication**: None - public access with display names only
 
 ## User Journey
@@ -121,38 +129,53 @@ YouSpace is a warm, cozy web application where users can continuously upload pho
 2. User adds their display name
 3. User uploads photos using file input
 4. User adds notes to memories
-5. Photos appear in memory cards
+5. Photos appear in memory cards gallery
 6. When ready, user clicks "Generate Our Memory Book"
-7. AI analyzes context and generates appropriate hand journal for the scenario (travel, work, study, daily life, events, relationships)
-8. User is redirected to /memorybook/:spaceId with the generated journal
-9. User can read the journal in vertical scrollable layout
-10. User can download the full journal as a single image
+7. AI generates short, poetic captions (max 20 words) for each photo with appropriate emoji
+8. User is redirected to /memorybook/:spaceId with the visual poster
+9. User sees a beautiful scrapbook-style poster with photos in frames, decorative elements, and captions
+10. User can download the full poster as a single vertical image (1080px width)
 
 ## AI Output Format
-The AI generates context-aware hand journals with depth, realism, and emotional authenticity:
+The AI generates short, poetic captions for each photo in a visual poster format:
 
-### Context Analysis & Emotional Tone
-Automatically detects scenario type and adapts emotional tone accordingly:
-- **Travel** → Wonder, reflection, landscape focus, sense of place
-- **Work/Project** → Growth, teamwork, purpose, learning
-- **Study** → Curiosity, progress, inner thoughts, breakthroughs
-- **Daily Life** → Stillness, small joys, subtle changes, quiet moments
-- **Events** → Excitement, connection, atmosphere, shared energy
-- **Friendship/Relationships** → Warmth, intimacy, nostalgia, presence
+### Caption Style
+- **Length**: Maximum 20 words per caption
+- **Tone**: Calm, reflective, scenario-aware
+- **Emoji**: One appropriate emoji per caption matching the mood
+- **References**: Based on user's notes and photo context
 
-### Writing Style
-- **Voice**: First-person ("I") - writes as if the person experiencing these moments
-- **Tone**: Calm, reflective, real-life diary style (not poetic or fictional)
-- **Pacing**: Authentic and unhurried - small, personal reflections instead of generic summaries
-- **Sensory Details**: Includes sound, light, smell, weather, time of day, and physical sensations to make moments vivid and grounded
-- **Natural Transitions**: Uses phrases like "Later in the afternoon...", "By the time we got home...", "Around midday..." to connect sections organically
+### Context-Aware Captions by Scenario
+- **Travel** → "The sunlight fell perfectly on this street 🌿", "Found this quiet path just before sunset 🌅"
+- **Daily Life** → "Morning coffee by the window, nothing special, just peace ☕", "The light was soft, the world still waking up 🌤"
+- **Events** → "Everyone arrived at once, laughter everywhere 🎉", "By midnight, just us and the quiet 🌙"
+- **Work/Project** → "Progress felt slow, but we kept going 💼"
+- **Study** → "Finally understanding after hours of trying 📚"
+- **Friendship/Relationships** → "Same spot, same drinks, always feels like home ☕", "Walking back, not wanting it to end 💬"
 
-### Structure & Format
-- **Format**: Markdown with # title and ## section headings
-- **Sections**: Chronological organization with emoji markers matching the scenario (e.g., 🌄 Early Morning, 🏞 Up the Ridge, 💼 Getting Started)
-- **Content**: 3-4 short, authentic sentences per section
-- **Length**: 300-600 words total
-- **Authenticity**: References only uploaded photos and notes - no invention or exaggeration
+### Poster Visual Design
+- **Layout**: 1080px width, vertical scrollable poster
+- **Background**: Soft beige paper texture (#f5f1e8)
+- **Photos**: Displayed in rounded white frames with shadows, slight rotation effects
+- **Decorations**: Washi tape accents, corner details, dotted line separators
+- **Captions**: Displayed in styled boxes with border accents
+- **Typography**: Handwritten font (Caveat) for title, serif font (Crimson Text) for captions
+- **Arrangement**: Alternating left-right photo-caption layout
+- **Colors**: Warm browns and beiges (#5c4a3a, #d4a574, #8c7a6a)
+
+### JSON Output Structure
+```json
+{
+  "title": "Weekend Memories",
+  "captions": [
+    {
+      "photoUrl": "https://...",
+      "caption": "Morning coffee by the window, nothing special, just peace",
+      "emoji": "☕"
+    }
+  ]
+}
+```
 
 ## File Structure
 ```

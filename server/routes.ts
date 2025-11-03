@@ -98,8 +98,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ error: "No memories found for this space" });
       }
 
-      // Generate story using OpenAI
-      const { title, content } = await generateMemoryStory(
+      // Generate captions for photos using OpenAI
+      const { title, captions } = await generateMemoryStory(
         memories.map(m => ({
           displayName: m.user_name,
           note: m.note,
@@ -107,13 +107,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }))
       );
 
-      // Combine title and content into story_text
-      const storyText = `# ${title}\n\n${content}`;
+      // Store title and captions as JSON in story_text
+      const storyData = JSON.stringify({ title, captions });
 
       // Save or update the generated story
       const story = await storage.updateGeneratedStory(spaceId, {
         space_id: spaceId,
-        story_text: storyText,
+        story_text: storyData,
       });
 
       res.json(story);
