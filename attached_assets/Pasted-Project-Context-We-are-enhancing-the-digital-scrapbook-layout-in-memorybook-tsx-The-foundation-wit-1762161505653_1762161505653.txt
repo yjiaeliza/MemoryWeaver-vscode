@@ -1,0 +1,41 @@
+Project Context:
+We are enhancing the digital scrapbook layout in memorybook.tsx. The foundation with diverse photo frames and asymmetric grid is now complete. The next phase focuses on implementing rich text elements and visual connections.
+
+Current Task (Part 2/3): Implement Text Note System & Visual Enhancements
+
+Requirements:
+
+Create Multiple Text Note Styles:
+
+.sticky-note-yellow: Classic yellow sticky note with folded corner effect using CSS gradients/transforms
+.handwritten-paper: Irregular edged paper with light kraft background, subtle texture
+.flag-label: Triangular-ended label for short tags, using CSS borders and transforms
+Implement Text-Photo Connection System:
+
+Create connector elements using ::after pseudo-elements
+Support both arrow lines (solid with arrowhead) and dotted lines
+Ensure connectors are positioned dynamically between notes and their associated photos
+Make connectors responsive to different layout positions
+Add Typography Hierarchy:
+
+Implement handwritten font ("Caveat", cursive) for captions and personal notes
+Use clean serif font ("Noto Serif", serif) for descriptive text
+Establish font size hierarchy (large for titles, medium for captions, small for details)
+Decorative Elements Foundation:
+
+Create basic mood stamp component (circular border with emoji)
+Implement simple date marker with icon integration
+Add hand-drawn divider elements (dashed lines, wave patterns)
+Technical Constraints:
+
+All elements must be html2canvas compatible (avoid CSS properties that don't render to canvas)
+Maintain responsive design within 1080px container
+Ensure text remains readable after export
+Use CSS-based solutions rather than external assets where possible
+Expected Output:
+
+Enhanced JSX structure integrating text notes with photo grid
+Complete CSS for note styles, connectors, and typography
+Example implementation showing notes connected to specific photos
+Proper font imports and fallbacks
+Please proceed with implementing the text note system and visual enhancements.
