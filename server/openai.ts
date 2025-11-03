@@ -18,32 +18,56 @@ export async function generateMemoryStory(memories: MemoryForStory[]): Promise<{
     `Memory ${idx + 1} by ${m.displayName}: "${m.note}"`
   ).join('\n\n');
 
-  const prompt = `You are a documentary-style travel journal writer who creates realistic, authentic travel journals from shared memories. You have been given a collection of photos and notes from a shared space where people have documented their experiences.
+  const prompt = `You are a hand journal writer who creates realistic, authentic personal journals from shared memories. You have been given a collection of photos and notes from a shared space where people have documented their life experiences.
 
-Your task is to create a realistic, documentary-style travel journal in Markdown format. The journal should:
+Your task is to create a realistic, documentary-style hand journal in Markdown format. The journal should:
 
-1. Use a calm, reflective, real-life diary tone (not poetic or fictional)
-2. Organize chronologically with emoji section markers (e.g., 🏞 Start, 🌲 Path, ❄️ Snow, 🏕 Return)
-3. Include short, authentic sentences (3-4 per section) that match the uploaded notes
-4. Avoid exaggeration or imagination — keep it real and human
-5. Use Markdown headings (# for title, ## for each section)
-6. Be between 300-600 words total
-7. Sound like a real person documenting their actual experiences
+1. **Analyze the context** - Read the notes/memories to understand the scenario type:
+   - Travel → describe journey, landscapes, discoveries
+   - Work/Project → describe process, teamwork, reflections, progress
+   - Study → describe learning moments, challenges, insights
+   - Daily Life → describe small moments, mood, personal growth
+   - Events → describe celebrations, gatherings, special occasions
+   - Friendship/Relationships → describe shared memories, feelings, connections
+   
+2. **Use first-person voice ("I")** - Write as if you are the person experiencing these moments
+
+3. **Match the tone to scenario**:
+   - Keep it calm, reflective, and real (not poetic or fictional)
+   - Avoid exaggeration or inventing events not mentioned in the notes
+   - Reference the uploaded photos and notes authentically
+   
+4. **Structure with Markdown**:
+   - Use # for the title
+   - Use ## for section headings with light emoji that match the scenario (e.g., 🌿 Morning Notes, 🏙 Project Wrap-up, 💬 Reflections, 🍃 Weekend Thoughts)
+   - Each section should have 3-4 short, authentic sentences
+   - Organize chronologically when possible
+   
+5. **Length**: 300-600 words total
+
+6. **Sound human** - Write like a real person documenting their actual experiences in their hand journal
 
 Here are the memories to transform into a journal:
 
 ${memoriesText}
 
 Format your response as JSON with two fields:
-- "title": A simple, realistic title (e.g., "Weekend at the Lake", "City Exploration", "Mountain Hike")
-- "content": The full journal in Markdown format with ## headings for each chronological section
+- "title": A simple, realistic title that matches the scenario (e.g., "Weekend Reflections", "Project Notes", "Study Session", "Coffee with Friends")
+- "content": The full journal in Markdown format with ## headings for each section
 
-Example format:
+Example formats for different scenarios:
+
+TRAVEL:
 ## 🏞 Morning Start
-We arrived early at the trailhead. The air was crisp and fresh. Everyone was excited to begin the hike.
+I arrived early at the trailhead. The air was crisp and fresh. I was excited to begin the hike.
 
-## 🌲 Through the Forest
-The path wound through tall pines. We stopped to take photos of the view. The sounds of nature were everywhere.`;
+WORK/PROJECT:
+## 💼 Getting Started
+I began working on the new feature today. The team was supportive and helpful. I learned a lot about the codebase.
+
+DAILY LIFE:
+## 🌅 Morning Thoughts
+I woke up feeling refreshed. The coffee tasted better than usual. I spent some time reading before starting my day.`;
 
   // User requested gpt-4o-mini, so we'll use that instead of the latest model
   const response = await openai.chat.completions.create({

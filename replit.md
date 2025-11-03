@@ -16,8 +16,10 @@ YouSpace is a warm, cozy web application where users can continuously upload pho
 2. **Photo Uploads**: Upload photos using Supabase Storage
 3. **Memory Notes**: Add short notes to accompany each photo
 4. **Masonry Gallery**: Beautiful responsive masonry grid layout for photos
-5. **AI Travel Journal Generation**: Generate realistic, documentary-style travel journals in Markdown format using OpenAI (gpt-4o-mini)
-6. **No Authentication**: Public file uploading for simplicity (MVP)
+5. **AI Hand Journal Generation**: Generate realistic, context-aware hand journals for all life scenarios (travel, work, study, daily life, events, relationships) in Markdown format using OpenAI (gpt-4o-mini)
+6. **Dedicated Journal Page**: View generated journals on a dedicated page at /memorybook/:spaceId with vertical scrollable layout
+7. **Download as Image**: Export the full journal as a single vertical image using html2canvas
+8. **No Authentication**: Public file uploading for simplicity (MVP)
 
 ## Tech Stack
 
@@ -64,11 +66,11 @@ YouSpace is a warm, cozy web application where users can continuously upload pho
 
 ### Services
 - **Supabase Service** (server/supabase.ts): Initialize Supabase client and handle photo uploads
-- **OpenAI Service** (server/openai.ts): Generate documentary-style travel journals using gpt-4o-mini
+- **OpenAI Service** (server/openai.ts): Generate context-aware hand journals for all life scenarios using gpt-4o-mini
 
 ### Frontend Components (client/src/)
-- **home.tsx**: Main page with all sections
-- **ObjectUploader.tsx**: Reusable file upload component using Uppy
+- **home.tsx**: Main page with space management, photo uploads, and memory gallery
+- **memorybook.tsx**: Dedicated page for viewing generated journals with download functionality
 - **App.tsx**: Application shell with routing
 - **index.css**: Design tokens and custom utility classes (hover-elevate, etc.)
 
@@ -93,16 +95,20 @@ YouSpace is a warm, cozy web application where users can continuously upload pho
    - Configured public bucket for photo access
 
 3. **AI Enhancement**:
-   - Changed from poetic stories to documentary-style travel journals
-   - Updated prompt for realistic, calm, reflective diary tone
-   - Output now in Markdown format with emoji section markers
+   - Changed from poetic stories to context-aware hand journals for all life scenarios
+   - AI analyzes content to determine scenario type (travel, work, study, daily life, events, relationships)
+   - Uses first-person voice ("I") with realistic, calm, reflective tone
+   - Output in Markdown format with emoji section markers matching the scenario
    - Chronological organization with short, authentic sentences (3-4 per section)
-   - Avoids exaggeration - keeps content real and human
+   - Avoids exaggeration and invention - references only uploaded photos and notes
 
 4. **Frontend Updates**:
    - Removed Sign In/Sign Out UI
    - Restored simple display name input (no authentication)
-   - Updated story display to render Markdown format
+   - Created dedicated MemoryBook page at /memorybook/:spaceId
+   - Added Download as Image functionality using html2canvas
+   - Updated navigation flow to redirect to MemoryBook page after generation
+   - Removed inline story display from home page
 
 ### Technical Notes
 - **Database**: Uses Supabase PostgreSQL with environment variables (SUPABASE_URL, SUPABASE_ANON_KEY)
@@ -113,21 +119,31 @@ YouSpace is a warm, cozy web application where users can continuously upload pho
 ## User Journey
 1. User enters or creates a Space ID
 2. User adds their display name
-3. User uploads photos using Uppy modal
+3. User uploads photos using file input
 4. User adds notes to memories
-5. Photos appear in masonry gallery
+5. Photos appear in memory cards
 6. When ready, user clicks "Generate Our Memory Book"
-7. AI generates realistic, documentary-style travel journal in Markdown format
-8. Journal displays with Markdown formatting and elegant typography on paper-like background
+7. AI analyzes context and generates appropriate hand journal for the scenario (travel, work, study, daily life, events, relationships)
+8. User is redirected to /memorybook/:spaceId with the generated journal
+9. User can read the journal in vertical scrollable layout
+10. User can download the full journal as a single image
 
 ## AI Output Format
-The AI generates documentary-style travel journals with:
+The AI generates context-aware hand journals with:
+- **Context Analysis**: Automatically detects scenario type from notes/photos
+  - Travel → journey, landscapes, discoveries
+  - Work/Project → process, teamwork, reflections, progress
+  - Study → learning moments, challenges, insights
+  - Daily Life → small moments, mood, personal growth
+  - Events → celebrations, gatherings, special occasions
+  - Friendship/Relationships → shared memories, feelings, connections
+- **Voice**: First-person ("I") - writes as if the person experiencing these moments
 - **Tone**: Calm, reflective, real-life diary style (not poetic or fictional)
-- **Structure**: Chronological sections with emoji markers (e.g., 🏞 Start, 🌲 Path, ❄️ Snow, 🏕 Return)
-- **Content**: Short, authentic sentences (3-4 per section) matching uploaded notes/photos
+- **Structure**: Chronological sections with emoji markers matching the scenario (e.g., 🌿 Morning Notes, 🏙 Project Wrap-up, 💬 Reflections)
+- **Content**: Short, authentic sentences (3-4 per section) referencing uploaded notes/photos
 - **Format**: Markdown with # title and ## section headings
 - **Length**: 300-600 words
-- **Style**: Realistic and human - avoids exaggeration or imagination
+- **Style**: Realistic and human - avoids exaggeration and inventing unrelated events
 
 ## File Structure
 ```

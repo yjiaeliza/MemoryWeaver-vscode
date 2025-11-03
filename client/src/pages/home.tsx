@@ -1,7 +1,8 @@
 import { useState } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
+import { useLocation } from "wouter";
 import { apiRequest, queryClient } from "@/lib/queryClient";
-import type { Memory, GeneratedStory } from "@shared/schema";
+import type { Memory } from "@shared/schema";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -12,6 +13,7 @@ import { useToast } from "@/hooks/use-toast";
 import { BookOpen, Upload, Sparkles, Image as ImageIcon } from "lucide-react";
 
 export default function Home() {
+  const [, setLocation] = useLocation();
   const [spaceId, setSpaceId] = useState("");
   const [userName, setUserName] = useState("");
   const [note, setNote] = useState("");
@@ -21,11 +23,6 @@ export default function Home() {
 
   const { data: memories = [], isLoading: memoriesLoading } = useQuery<Memory[]>({
     queryKey: ["/api/memories", spaceId],
-    enabled: !!spaceId,
-  });
-
-  const { data: generatedStory, isLoading: storyLoading } = useQuery<GeneratedStory | null>({
-    queryKey: ["/api/generated-story", spaceId],
     enabled: !!spaceId,
   });
 
@@ -112,18 +109,18 @@ export default function Home() {
   const generateStoryMutation = useMutation({
     mutationFn: () => apiRequest("POST", "/api/generate-story", { spaceId }),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/generated-story", spaceId] });
+      queryClient.invalidateQueries({ queryKey: ["/api/story", spaceId] });
       toast({
-        title: "Story generated!",
-        description: "Your memory book is ready to read.",
+        title: "Memory book generated!",
+        description: "Opening your personalized journal...",
       });
       setTimeout(() => {
-        document.getElementById("generated-story")?.scrollIntoView({ behavior: "smooth" });
-      }, 300);
+        setLocation(`/memorybook/${spaceId}`);
+      }, 500);
     },
     onError: (error: Error) => {
       toast({
-        title: "Error generating story",
+        title: "Error generating memory book",
         description: error.message,
         variant: "destructive",
       });
@@ -321,59 +318,6 @@ export default function Home() {
                 )}
               </CardContent>
             </Card>
-
-            {/* Generated Story Section */}
-            {generatedStory && (
-              <Card id="generated-story" className="scroll-mt-24 bg-card/50 backdrop-blur border-2">
-                <CardHeader>
-                  <CardTitle className="font-handwritten text-4xl text-center" data-testid="text-story-section-title">
-                    Your Memory Book
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="prose prose-lg max-w-none font-serif">
-                  <div
-                    className="leading-relaxed"
-                    data-testid="text-generated-story"
-                    dangerouslySetInnerHTML={{ 
-                      __html: (() => {
-                        const lines = generatedStory.story_text.split('\n');
-                        const output: string[] = [];
-                        let currentParagraph: string[] = [];
-                        
-                        const flushParagraph = () => {
-                          if (currentParagraph.length > 0) {
-                            output.push(`<p class="mb-4">${currentParagraph.join(' ')}</p>`);
-                            currentParagraph = [];
-                          }
-                        };
-                        
-                        for (const line of lines) {
-                          const trimmed = line.trim();
-                          
-                          if (!trimmed) {
-                            flushParagraph();
-                            continue;
-                          }
-                          
-                          if (trimmed.startsWith('## ')) {
-                            flushParagraph();
-                            output.push(`<h2 class="font-handwritten text-2xl mt-6 mb-3">${trimmed.slice(3)}</h2>`);
-                          } else if (trimmed.startsWith('# ')) {
-                            flushParagraph();
-                            output.push(`<h1 class="font-handwritten text-3xl mb-4">${trimmed.slice(2)}</h1>`);
-                          } else {
-                            currentParagraph.push(trimmed);
-                          }
-                        }
-                        
-                        flushParagraph();
-                        return output.join('');
-                      })()
-                    }}
-                  />
-                </CardContent>
-              </Card>
-            )}
           </>
         )}
       </main>
