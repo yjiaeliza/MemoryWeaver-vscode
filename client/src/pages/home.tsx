@@ -98,9 +98,14 @@ export default function Home() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/memories", spaceId] });
-      setUserName("");
+      // Keep userName so user doesn't have to re-enter it for next memory
       setNote("");
       setUploadedPhoto(null);
+      // Reset the file input
+      const fileInput = document.getElementById("photo") as HTMLInputElement;
+      if (fileInput) {
+        fileInput.value = "";
+      }
       toast({
         title: "Memory added!",
         description: "Your moment has been added to the shared space.",

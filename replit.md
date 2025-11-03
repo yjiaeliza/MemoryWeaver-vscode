@@ -107,15 +107,21 @@ YouSpace is a warm, cozy web application where users can continuously upload pho
    - Created visual poster layout at /memorybook/:spaceId with scrapbook aesthetic
    - Poster features:
      * 1080px width vertical scrollable design
-     * Photos in rounded frames with decorative shadows
-     * Washi tape decorations on photos
-     * Alternating left/right photo-caption layout
-     * Short captions with emoji in styled boxes
-     * Beige paper texture background
+     * 4 distinct photo frame styles (polaroid, torn-edge, scotch-tape, regular-photo)
+     * Asymmetric CSS Grid layout with varying column spans for non-linear arrangement
+     * Random rotation (-3deg to +3deg) for authentic scrapbook aesthetic
+     * Short captions with emoji displayed below photos
+     * Beige paper texture background (#f5f1e8)
      * Handwritten fonts for title, serif for captions
-     * Decorative elements (dotted lines, corner accents)
    - Download as Image functionality using html2canvas
    - Updated navigation flow to redirect to MemoryBook poster page after generation
+   - Fixed userName persistence bug: user name now persists between memory additions
+
+5. **html2canvas Compatibility**:
+   - Replaced clip-path in torn-edge frame with box-shadows and gradients
+   - All CSS effects now compatible with html2canvas export
+   - CORS-enabled image loading with waitForImages helper
+   - Proper image preloading before poster export
 
 ### Technical Notes
 - **Database**: Uses Supabase PostgreSQL with environment variables (SUPABASE_URL, SUPABASE_ANON_KEY)
@@ -154,14 +160,19 @@ The AI generates short, poetic captions for each photo in a visual poster format
 - **Friendship/Relationships** → "Same spot, same drinks, always feels like home ☕", "Walking back, not wanting it to end 💬"
 
 ### Poster Visual Design
-- **Layout**: 1080px width, vertical scrollable poster
+- **Layout**: 1080px width, vertical scrollable poster with asymmetric CSS Grid
 - **Background**: Soft beige paper texture (#f5f1e8)
-- **Photos**: Displayed in rounded white frames with shadows, slight rotation effects
-- **Decorations**: Washi tape accents, corner details, dotted line separators
-- **Captions**: Displayed in styled boxes with border accents
+- **Photos**: 4 distinct frame styles rotating through photos:
+  * Polaroid Frame: Classic instant photo with white background and extra bottom space
+  * Torn-Edge Frame: Paper torn effect with textured borders and inset shadows
+  * Scotch-Tape Frame: Semi-transparent tape pieces on top corners
+  * Regular Photo: Simple rounded corners with shadow
+- **Rotation**: Random rotation between -3deg and +3deg for scrapbook aesthetic
+- **Grid Layout**: 12-column CSS Grid with asymmetric column spans (7, 5, 6, 8, 4-column items)
+- **Captions**: Displayed below photos in styled boxes with border accents
 - **Typography**: Handwritten font (Caveat) for title, serif font (Crimson Text) for captions
-- **Arrangement**: Alternating left-right photo-caption layout
 - **Colors**: Warm browns and beiges (#5c4a3a, #d4a574, #8c7a6a)
+- **html2canvas Compatible**: All CSS effects work with image export (no clip-path or unsupported features)
 
 ### JSON Output Structure
 ```json
