@@ -7,9 +7,11 @@ YouSpace is a warm, cozy web application where users can continuously upload pho
 - **Aesthetic**: Moleskine journal aesthetic - warm, minimal, cozy
 - **Typography**: 
   - Crimson Text (serif) for body text and story content
-  - Caveat (handwritten) for playful accents, taglines, and headings
+  - Caveat (handwritten) for playful accents, taglines, and captions
+  - Noto Serif (clean serif) for descriptive text and labels
 - **Color Palette**: Warm tones with cream/sepia backgrounds, brown/tan accents
 - **User Experience**: Simple, intuitive, emotionally resonant
+- **Scrapbook Elements**: Diverse text notes, decorative stamps, visual connectors
 
 ## Key Features
 1. **Shared Spaces**: Multiple users can contribute to the same space via Space ID
@@ -30,7 +32,7 @@ YouSpace is a warm, cozy web application where users can continuously upload pho
 - **UI Components**: Shadcn UI + Radix UI primitives
 - **Styling**: Tailwind CSS
 - **File Upload**: Uppy (@uppy/core, @uppy/react, @uppy/aws-s3)
-- **Fonts**: Google Fonts (Crimson Text, Caveat)
+- **Fonts**: Google Fonts (Crimson Text, Caveat, Noto Serif)
 
 ### Backend
 - **Server**: Express.js
@@ -169,10 +171,25 @@ The AI generates short, poetic captions for each photo in a visual poster format
   * Regular Photo: Simple rounded corners with shadow
 - **Rotation**: Random rotation between -3deg and +3deg for scrapbook aesthetic
 - **Grid Layout**: 12-column CSS Grid with asymmetric column spans (7, 5, 6, 8, 4-column items)
-- **Captions**: Displayed below photos in styled boxes with border accents
-- **Typography**: Handwritten font (Caveat) for title, serif font (Crimson Text) for captions
-- **Colors**: Warm browns and beiges (#5c4a3a, #d4a574, #8c7a6a)
-- **html2canvas Compatible**: All CSS effects work with image export (no clip-path or unsupported features)
+
+### Text Note System (Part 2/3 Enhancement)
+- **Three Text Note Styles** rotating through captions:
+  1. **Sticky Note Yellow**: Classic sticky note with folded corner effect, handwritten font
+  2. **Handwritten Paper**: Kraft paper texture with irregular edges, larger handwritten font
+  3. **Default Style**: Clean white background with border accent, serif font
+- **Typography Hierarchy**:
+  * Handwritten: Caveat font (lg, md, sm) for captions and personal notes
+  * Clean Serif: Noto Serif (lg, md, sm) for descriptive text
+- **Decorative Elements**:
+  * Mood Stamp: Circular border with emoji, slight rotation
+  * Flag Label: Triangular-ended label for tags
+  * Dividers: Hand-drawn dashed and wave patterns
+- **Connector System**:
+  * Arrow connectors: Solid line with arrowhead pointing down
+  * Dotted connectors: Dotted line connecting elements
+  * Example: "First Memory" flag label connects to first photo
+- **Colors**: Warm browns and beiges (#5c4a3a, #d4a574, #8c7a6a), yellow (#fef9c3), kraft (#f5f0e8)
+- **html2canvas Compatible**: All CSS effects work with image export (gradients, borders, transforms only)
 
 ### JSON Output Structure
 ```json
