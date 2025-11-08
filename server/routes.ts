@@ -1,125 +1,85 @@
+import express from "express";
 import type { Express } from "express";
 import { createServer, type Server } from "http";
-import { storage } from "./storage";
-import { insertMemorySchema, insertGeneratedStorySchema } from "@shared/schema";
-import { generateMemoryStory } from "./openai";
-import { supabase } from "./supabase";
 
 export async function registerRoutes(app: Express): Promise<Server> {
-  // Supabase Storage: Get upload URL for photos
-  app.post("/api/storage/upload", async (req, res) => {
+  console.log("✅ registerRoutes 被调用");
+
+  // ✅ 确保后端能接收大图片（Base64 可能很长）
+  app.use(express.json({ limit: "15mb" }));
+
+  // ========= 智谱 AI 手帐描述路由 =========
+  app.post("/api/caption", async (req, res) => {
     try {
-      const { fileName, fileType } = req.body;
-      
-      if (!fileName || !fileType) {
-        return res.status(400).json({ error: "fileName and fileType are required" });
+      const { image } = req.body;
+
+      // ✅ 调试输出，确认前端传来的格式
+      console.log("📸 image 类型:", typeof image);
+      console.log("📸 image 预览:", String(image).slice(0, 100));
+
+      if (!image || typeof image !== "string") {
+        return res.status(400).json({ error: "image is required (base64 string or URL)" });
       }
 
-      // Generate a unique file name
-      const timestamp = Date.now();
-      const uniqueFileName = `${timestamp}-${fileName}`;
-      const filePath = `photos/${uniqueFileName}`;
+      // 判断是 URL 还是 Base64
+      const isUrl = /^https?:\/\//i.test(image);
+      let imageForAPI = image;
 
-      // Get signed URL for upload
-      const { data, error } = await supabase.storage
-        .from('memories')
-        .createSignedUploadUrl(filePath);
-
-      if (error) {
-        console.error("Error getting upload URL:", error);
-        return res.status(500).json({ error: "Failed to get upload URL" });
+      // ✅ 如果是 Base64，就补上 data URI 头（智谱也能接受）
+      if (!isUrl) {
+        const hasHeader = /^data:image\/\w+;base64,/i.test(image);
+        if (!hasHeader) {
+          imageForAPI = `data:image/jpeg;base64,${image}`;
+        }
       }
 
-      // Return both the upload URL and the final public URL
-      const publicUrl = supabase.storage
-        .from('memories')
-        .getPublicUrl(filePath).data.publicUrl;
+      console.log("🧠 准备发送给智谱的 image_url 预览:", imageForAPI.slice(0, 80));
 
-      res.json({ 
-        uploadURL: data.signedUrl,
-        publicURL: publicUrl,
-        filePath
-      });
-    } catch (error) {
-      console.error("Error getting upload URL:", error);
-      res.status(500).json({ error: "Failed to get upload URL" });
-    }
-  });
+      const response = await fetch("https://open.bigmodel.cn/api/paas/v4/chat/completions", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${process.env.ZHIPUAI_API_KEY}`,
+        },
+        body: JSON.stringify({
+  model: "glm-4v",
+  messages: [
+    {
+      role: "user",
+      content: [
+        {
+          type: "text",
+          text: "请用温柔手帐风，不超过20个词，场景感，末尾配1个契合表情；参考用户备注。",
+        },
+        {
+          type: "image_url",
+          image_url: { url: imageForAPI }, // ✅ 改成对象
+        },
+      ],
+    },
+  ],
+}),
 
-  // Create a new memory
-  app.post("/api/memories", async (req, res) => {
-    try {
-      const validatedData = insertMemorySchema.parse(req.body);
-      const memory = await storage.createMemory(validatedData);
-      res.status(201).json(memory);
-    } catch (error) {
-      console.error("Error creating memory:", error);
-      res.status(400).json({ error: "Failed to create memory" });
-    }
-  });
-
-  // Get all memories for a space
-  app.get("/api/memories/:spaceId", async (req, res) => {
-    try {
-      const { spaceId } = req.params;
-      const memories = await storage.getMemoriesBySpaceId(spaceId);
-      res.json(memories);
-    } catch (error) {
-      console.error("Error fetching memories:", error);
-      res.status(500).json({ error: "Failed to fetch memories" });
-    }
-  });
-
-  // Get generated story for a space
-  app.get("/api/generated-story/:spaceId", async (req, res) => {
-    try {
-      const { spaceId } = req.params;
-      const story = await storage.getGeneratedStoryBySpaceId(spaceId);
-      res.json(story || null);
-    } catch (error) {
-      console.error("Error fetching story:", error);
-      res.status(500).json({ error: "Failed to fetch story" });
-    }
-  });
-
-  // Generate a memory book story using OpenAI
-  app.post("/api/generate-story", async (req, res) => {
-    try {
-      const { spaceId } = req.body;
-      
-      if (!spaceId) {
-        return res.status(400).json({ error: "spaceId is required" });
-      }
-
-      // Get all memories for this space
-      const memories = await storage.getMemoriesBySpaceId(spaceId);
-
-      if (memories.length === 0) {
-        return res.status(400).json({ error: "No memories found for this space" });
-      }
-
-      // Generate captions for photos using OpenAI
-      const { title, captions } = await generateMemoryStory(
-        memories.map(m => ({
-          displayName: m.user_name,
-          note: m.note,
-          photoUrl: m.photo_url,
-        }))
-      );
-
-      // Store title and captions as JSON in story_text
-      const storyData = JSON.stringify({ title, captions });
-
-      // Save or update the generated story
-      const story = await storage.updateGeneratedStory(spaceId, {
-        space_id: spaceId,
-        story_text: storyData,
       });
 
-      res.json(story);
-    } catch (error) {
-      console.error("Error generating story:", error);
-      res.status(500).json({ error: "Failed to generate story" });
+      const data = await response.json();
+
+      if (!response.ok) {
+        console.error("❌ 智谱 API 调用错误:", data);
+        return res.status(500).json({ error: data });
+      }
+
+      const caption =
+        data?.choices?.[0]?.message?.content ||
+        data?.choices?.[0]?.content ||
+        "暂时无法生成描述，请稍后再试。";
+
+      console.log("✅ 智谱返回:", caption);
+
+      res.json({ caption });
+    } catch (err: any) {
+      console.error("❌ caption 生成失败:", err);
+      res.status(500).json({ error: err?.message || "生成失败" });
     }
   });
 

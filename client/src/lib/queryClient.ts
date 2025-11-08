@@ -1,57 +1,22 @@
-import { QueryClient, QueryFunction } from "@tanstack/react-query";
+// src/lib/queryClient.ts
+import { QueryClient } from "@tanstack/react-query";
 
-async function throwIfResNotOk(res: Response) {
-  if (!res.ok) {
-    const text = (await res.text()) || res.statusText;
-    throw new Error(`${res.status}: ${text}`);
-  }
-}
+/**
+ * ✅ 初始化 React Query 客户端
+ * 用于全局缓存管理（例如 API 数据、请求状态等）
+ */
+export const queryClient = new QueryClient();
 
-export async function apiRequest<T = any>(
+/**
+ * ✅ 模拟一个通用的 API 请求函数
+ * （即使你暂时还没后端，也能用这个函数避免错误）
+ */
+export async function apiRequest<T>(
   method: string,
   url: string,
-  data?: unknown | undefined,
+  body?: any
 ): Promise<T> {
-  const res = await fetch(url, {
-    method,
-    headers: data ? { "Content-Type": "application/json" } : {},
-    body: data ? JSON.stringify(data) : undefined,
-    credentials: "include",
-  });
-
-  await throwIfResNotOk(res);
-  return await res.json();
+  console.log(`[Mock API] ${method} ${url}`, body);
+  // 这里返回一个泛型空对象，以避免类型报错
+  return {} as T;
 }
-
-type UnauthorizedBehavior = "returnNull" | "throw";
-export const getQueryFn: <T>(options: {
-  on401: UnauthorizedBehavior;
-}) => QueryFunction<T> =
-  ({ on401: unauthorizedBehavior }) =>
-  async ({ queryKey }) => {
-    const res = await fetch(queryKey.join("/") as string, {
-      credentials: "include",
-    });
-
-    if (unauthorizedBehavior === "returnNull" && res.status === 401) {
-      return null;
-    }
-
-    await throwIfResNotOk(res);
-    return await res.json();
-  };
-
-export const queryClient = new QueryClient({
-  defaultOptions: {
-    queries: {
-      queryFn: getQueryFn({ on401: "throw" }),
-      refetchInterval: false,
-      refetchOnWindowFocus: false,
-      staleTime: 0,
-      retry: false,
-    },
-    mutations: {
-      retry: false,
-    },
-  },
-});

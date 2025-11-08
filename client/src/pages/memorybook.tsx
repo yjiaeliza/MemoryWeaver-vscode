@@ -106,55 +106,51 @@ export default function MemoryBook() {
   };
 
   const handleDownloadImage = async () => {
-    if (!posterRef.current) return;
+  if (!posterRef.current) return;
+  
+  setIsDownloading(true);
+  try {
+    // 尝试客户端生成（简单配置）
+    const canvas = await html2canvas(posterRef.current, {
+      backgroundColor: '#f5f1e8',
+      scale: 1,
+      useCORS: true,
+      allowTaint: true, // 改为 true 尝试绕过限制
+      logging: false,
+    });
+
+    const link = document.createElement('a');
+    link.download = `memory-poster-${spaceId}-${Date.now()}.png`;
+    link.href = canvas.toDataURL('image/png');
+    link.click();
     
-    setIsDownloading(true);
-    try {
-      // Wait for all images to load with 5-second timeout
-      const images = Array.from(posterRef.current.querySelectorAll('img')) as HTMLImageElement[];
-      const imagesLoaded = await waitForImages(images, 5000);
+    toast({
+      title: "下载成功！🎉",
+      description: "记忆海报已保存到您的设备",
+    });
+    
+  } catch (error) {
+    console.error('Download error:', error);
+    
+    // 友好的备选方案指导
+    toast({
+      title: "自动下载受限",
+      description: (
+        <div>
+          <p>请使用截图功能保存：</p>
+          <p><strong>Mac:</strong> Cmd+Shift+4 然后拖选区域</p>
+          <p><strong>Windows:</strong> Win+Shift+S 然后选择区域</p>
+        </div>
+      ),
+      variant: "default",
+      duration: 15000,
+    });
+  } finally {
+    setIsDownloading(false);
+  }
+};
 
-      if (!imagesLoaded) {
-        toast({
-          title: "Images still loading",
-          description: "Some images are still loading. Please wait a moment before exporting.",
-          variant: "destructive",
-        });
-        setIsDownloading(false);
-        return;
-      }
-
-      // Capture with html2canvas using CORS settings
-      const canvas = await html2canvas(posterRef.current, {
-        backgroundColor: '#f5f1e8',
-        scale: 2,
-        useCORS: true,
-        allowTaint: false,
-        logging: false,
-        windowWidth: 1080,
-        windowHeight: posterRef.current.scrollHeight,
-      });
-
-      const link = document.createElement('a');
-      link.download = `memory-poster-${spaceId}-${Date.now()}.png`;
-      link.href = canvas.toDataURL('image/png');
-      link.click();
-      
-      toast({
-        title: "Download complete!",
-        description: "Your memory poster has been saved.",
-      });
-    } catch (error) {
-      console.error('Error downloading image:', error);
-      toast({
-        title: "Download failed",
-        description: "There was an error creating your poster image. Please try again.",
-        variant: "destructive",
-      });
-    } finally {
-      setIsDownloading(false);
-    }
-  };
+ 
 
   if (isLoading) {
     return (
@@ -178,12 +174,13 @@ export default function MemoryBook() {
             <p className="text-muted-foreground">
               This space doesn't have a generated memory book yet.
             </p>
-            <Button asChild data-testid="button-back-to-space">
-              <Link href={`/?spaceId=${spaceId}`}>
-                <ArrowLeft className="w-4 h-4 mr-2" />
-                Back to Space
-              </Link>
-            </Button>
+         <Button data-testid="button-back-to-space">
+  <Link href={`/?spaceId=${spaceId}`}>
+    <ArrowLeft className="w-4 h-4 mr-2" />
+    Back to Space
+  </Link>
+</Button>
+
           </CardContent>
         </Card>
       </div>
@@ -196,17 +193,18 @@ export default function MemoryBook() {
       <div className="sticky top-0 z-10 bg-background/95 backdrop-blur border-b shadow-sm">
         <div className="container mx-auto px-4 py-4">
           <div className="flex items-center justify-between gap-4">
-            <Button
-              variant="ghost"
-              size="sm"
-              asChild
-              data-testid="button-back-to-space"
-            >
-              <Link href={`/?spaceId=${spaceId}`}>
-                <ArrowLeft className="w-4 h-4 mr-2" />
-                Back to Space
-              </Link>
-            </Button>
+           <Button
+  variant="ghost"
+  size="sm"
+  data-testid="button-back-to-space"
+>
+  <Link href={`/?spaceId=${spaceId}`}>
+    <ArrowLeft className="w-4 h-4 mr-2" />
+    Back to Space
+  </Link>
+</Button>
+
+
             
             <Button
               onClick={handleDownloadImage}
